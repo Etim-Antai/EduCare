@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Notifications</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #8a7b6b; /* Header color */
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin: 10px 0;
+            text-decoration: none;
+            color: #007bff; /* Link color */
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline; /* Underline on hover */
+        }
+        .notification-list {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .notification-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f3f3f3;
+            transition: background-color 0.3s;
+        }
+        .notification-item:hover {
+            background-color: #e2e2e2; /* Change background on hover */
+        }
+        .error-message {
+            color: red;
+            margin: 10px 0;
+            text-align: center;
+            display: none; /* Initially hidden */
+        }
+        .notification-type {
+            font-size: 0.9em; /* Smaller font for type */
+            color: #555; /* Lighter color for type */
+        }
+        .notification-time {
+            font-size: 0.8em; /* Smaller font for timestamp */
+            color: #999; /* Grey color for timestamp */
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Teacher Notifications</h1>
+</header>
+
+<a href="teacherdashboard.html" class="back-link">Return to Teacher Dashboard</a>
+
+<div class="notification-list" id="notificationList">
+    <h3>Your Notifications</h3>
+    <div class="error-message" id="error-message" style="display:none;"></div>
+    <ul id="notifications"></ul> <!-- List of notifications -->
+</div>
+
+<script>
+    async function loadNotifications() {
+        const token = localStorage.getItem('token');
+        
+        try {
+            const response = await fetch('http://localhost:9000/api/teacher-notifications/all', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch notifications: ' + response.statusText);
+            }
+
+            const notifications = await response.json() || [];
+            
+            const notificationList = document.getElementById('notifications');
+            notificationList.innerHTML = ''; // Clear existing notifications
+
+            // Populate the notification list
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '<li>No new notifications.</li>';
+            } else {
+                notifications.forEach(notification => {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('notification-item');
+                    listItem.innerHTML = `
+                        <strong>${notification.message}</strong><br>
+                        <span class="notification-type">Type: ${notification.event_type}</span><br>
+                        <span class="notification-time">${new Date(notification.created_at).toLocaleString()}</span>
+                    `;
+                    notificationList.appendChild(listItem);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = 'Unable to load notifications. Please try again later.';
+            errorMessage.style.display = 'block';
+        }
+    }
+
+    // Call loadNotifications on page load
+    window.onload = loadNotifications;
+</script>
+
+</body>
+</html>

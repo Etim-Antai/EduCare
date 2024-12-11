@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Admin Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f8ff; /* Light background color */
+            color: #333; /* Dark text color */
+        }
+        h1 {
+            color: #007BFF; /* Blue title */
+            text-align: center; /* Center the heading */
+        }
+        .profile {
+            border: 2px solid #007BFF; /* Blue border */
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px; /* Rounded corners */
+            background-color: #ffffff; /* White background */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+            text-align: center; /* Center content within profile */
+        }
+        .profile-picture {
+            width: 120px; 
+            height: 120px; 
+            border-radius: 50%; /* Make it circular */
+            object-fit: cover; /* Crop the image to fit */
+            margin-bottom: 20px; 
+            border: 3px solid #007BFF; /* Blue border around picture */
+        }
+        .error-message {
+            color: red;
+            text-align: center; /* Centered error message */
+        }
+        .links {
+            display: flex;
+            justify-content: center; /* Center links */
+            margin-top: 20px;
+        }
+        .links a {
+            margin: 0 10px; /* Space between links */
+            text-decoration: none;
+            color: #ffffff; /* White text for links */
+            padding: 10px 15px; /* Padding for button effect */
+            background-color: #007BFF; /* Blue background */
+            border-radius: 5px; /* Rounded corners for links */
+            transition: background-color 0.3s; /* Smooth transition */
+        }
+        .links a:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+    </style>
+</head>
+<body>
+
+<h1>Admin Profile</h1>
+
+<div class="profile" id="adminProfile">
+    <img id="adminProfilePicture" class="profile-picture" src="" alt="Profile Picture Default">
+    <div id="profileDetails"></div>
+</div>
+
+<div id="errorMessage" class="error-message"></div>
+
+<div class="links">
+    <a href="admindashboard.html">Back to Dashboard</a>
+    <a href="updateAdminProfile.html?id=" id="updateProfileLink">Update Profile</a> <!-- Updated link -->
+</div>
+
+<script>
+    async function fetchAdminProfile() {
+        const adminId = sessionStorage.getItem('adminId'); // Get the 'adminId' stored in sessionStorage
+        const profileDiv = document.getElementById('adminProfile');
+        const profilePicture = document.getElementById('adminProfilePicture');
+        const errorMessageDiv = document.getElementById('errorMessage');
+        const profileDetailsDiv = document.getElementById('profileDetails'); // New variable for details
+
+        // Check if the adminId exists
+        if (!adminId) {
+            errorMessageDiv.textContent = 'Error: Admin ID not found. Please log in again.';
+            return;
+        }
+
+        const token = sessionStorage.getItem('token'); // Get the authentication token
+
+        try {
+            const response = await fetch(`http://localhost:9000/api/admin/profile?id=${adminId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Include the token in the Authorization header
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const adminData = await response.json();
+
+            if (adminData.data) {
+                const profileHtml = `
+                    <h2>${adminData.data.first_name} ${adminData.data.last_name}</h2>
+                    <p><strong>Email:</strong> ${adminData.data.email}</p>
+                    <p><strong>Username:</strong> ${adminData.data.username}</p>
+                    <p><strong>Phone:</strong> ${adminData.data.phone}</p>
+                    <p><strong>Role:</strong> ${adminData.data.role}</p>
+                `;
+                profileDetailsDiv.innerHTML = profileHtml; // Append profile data to profileDetailsDiv
+
+                // Update the profile picture source
+                profilePicture.src = adminData.data.profile_picture || 'path_to_default_image.jpg'; // Provide path to default image if needed
+
+                // Update the Update Profile link with the admin ID
+                document.getElementById('updateProfileLink').href = `updateAdminProfile.html?id=${adminId}`; // Corrected link
+            } else {
+                profileDiv.innerHTML = '<p>No admin found.</p>';
+            }
+        } catch (error) {
+            console.error('Error fetching admin profile:', error);
+            errorMessageDiv.textContent = 'Error fetching admin profile: ' + error.message; // Display error message
+        }
+    }
+
+    // Call the function to fetch the admin profile on page load
+    window.onload = fetchAdminProfile;
+</script>
+
+</body>
+</html>

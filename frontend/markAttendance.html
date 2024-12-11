@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9; /* Zebra striping for readability */
+        }
+
+        #loading {
+            display: none; /* Hidden by default */
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #message {
+            color: red; /* For error messages */
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin: 15px 0;
+            text-decoration: none;
+            color: white;
+            background-color: #28a745; /* Green color */
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .back-link:hover {
+            background-color: #218838; /* Darker green on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Mark Attendance</h1>
+        <a href="teacherdashboard.html" class="back-link">Return to Dashboard</a> <!-- Link to return to teacher dashboard -->
+    </div>
+
+    <div class="container">
+        <h2>Select a Class</h2>
+        <select id="classSelect"></select> <!-- Dropdown for selecting a class -->
+        
+        <h2>Students</h2>
+        <table id="studentTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Present</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Student data will be populated here -->
+            </tbody>
+        </table>
+
+        <button id="submitAttendance">Submit Attendance</button>
+        <div id="loading">Loading students...</div> <!-- Loading message -->
+        <div id="message"></div> <!-- Error message display -->
+    </div>
+
+    <script>
+        // Fetch the list of classes when the page loads
+        async function fetchClasses() {
+            const token = localStorage.getItem('token');
+            try {
+                // Request to fetch classes
+                const response = await fetch('http://localhost:9000/api/classes', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                // Check response status
+                if (!response.ok) {
+                    throw new Error('Failed to fetch classes.');
+                }
+
+                const classes = await response.json();
+                populateClassSelect(classes.data);
+                
+                // Automatically fetch students for the first class if any classes exist
+                if (classes.data.length > 0) {
+                    fetchStudents(classes.data[0].class_id); // Fetch students for the initially selected class
+                }
+            } catch (error) {
+                console.error('Error fetching classes:', error);
+                document.getElementById('message').textContent = "Failed to load classes.";
+            }
+        }
+
+        // Populate the class dropdown
+        function populateClassSelect(classes) {
+            const classSelect = document.getElementById('classSelect');
+            classSelect.innerHTML = ''; // Clear previous options
+            classes.forEach(classItem => {
+                const option = document.createElement('option');
+                option.value = classItem.class_id; // Ensure this matches your database schema
+                option.textContent = classItem.class_name; // Option text with class name
+                classSelect.appendChild(option);
+            });
+        }
+
+        // Fetch students based on selected class ID
+        async function fetchStudents(classId) {
+            const token = localStorage.getItem('token');
+            const tableBody = document.getElementById('studentTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; // Clear existing data
+            document.getElementById('loading').style.display = 'block'; // Show loading message
+
+            try {
+                // Request to fetch students
+                const response = await fetch(`http://localhost:9000/api/students/classes/${classId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                // Throw an error if response is not OK
+                if (!response.ok) {
+                    const errorDetails = await response.text(); // May help get more insights
+                    throw new Error(`Failed to fetch students. Status: ${response.status}, Details: ${errorDetails}`);
+                }
+
+                const data = await response.json();
+                populateStudentTable(data.data);
+            } catch (error) {
+                console.error('Error fetching students:', error);
+                document.getElementById('message').textContent = error.message; // Show error message
+            } finally {
+                document.getElementById('loading').style.display = 'none'; // Hide loading message
+            }
+        }
+
+        // Populate the student table with data
+        function populateStudentTable(students) {
+            const tableBody = document.getElementById('studentTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; // Clear existing data
+
+            students.forEach(student => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).innerText = student.student_id; // ID
+                row.insertCell(1).innerText = `${student.first_name} ${student.last_name}`; // Name
+                
+                const checkboxCell = row.insertCell(2);
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox'; // Checkbox for attendance
+                checkbox.value = student.student_id; // Use student ID for attendance marking
+                checkboxCell.appendChild(checkbox); // Add checkbox to cell
+            });
+        }
+
+        // Submit the attendance for marked students
+        async function submitAttendance() {
+            const token = localStorage.getItem('token');
+            const classId = document.getElementById('classSelect').value; // Get selected class ID
+            const tableBody = document.getElementById('studentTable').getElementsByTagName('tbody')[0];
+            const attendanceData = [];
+
+            // Collect attendance data from the table
+            Array.from(tableBody.rows).forEach(row => {
+                const studentId = row.cells[0].innerText; // Get student ID
+                const presentCheckbox = row.cells[2].firstChild; // Get checkbox
+
+                // Construct the attendance entry
+                const attendanceEntry = {
+                    student_id: studentId,
+                    class_id: classId,
+                    date: new Date().toISOString().split('T')[0], // Format to "YYYY-MM-DD"
+                    status: presentCheckbox.checked ? "Present" : "Absent" // Determine status
+                };
+
+                attendanceData.push(attendanceEntry); // Add to array
+            });
+
+            // Log attendance data for debugging
+            if (attendanceData.length === 0) {
+                document.getElementById('message').textContent = "No attendance data to submit.";
+                return; // Prevent submission if no data
+            }
+
+            try {
+                // Request to submit attendance
+                const response = await fetch('http://localhost:9000/api/attendance/mark', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(attendanceData) // Submit attendance data as JSON
+                });
+
+                // Handle response
+                if (!response.ok) {
+                    const errorDetails = await response.text(); // Get more details about the error
+                    throw new Error(`Failed to submit attendance: ${errorDetails}`);
+                }
+
+                alert('Attendance submitted successfully!'); // Show success message
+                document.getElementById('message').textContent = ""; // Clear any error messages
+            } catch (error) {
+                console.error('Error submitting attendance:', error);
+                document.getElementById('message').textContent = error.message; // Show error message
+            }
+        }
+
+        // Event Listener for Class Selection
+        document.getElementById('classSelect').addEventListener('change', (e) => {
+            fetchStudents(e.target.value); // Fetch students for the selected class ID
+        });
+
+        // Set up event listener for submit button
+        document.getElementById('submitAttendance').addEventListener('click', submitAttendance);
+
+        // Fetch classes when the page loads
+        window.onload = fetchClasses;
+    </script>
+</body>
+</html>

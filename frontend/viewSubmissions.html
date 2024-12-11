@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Student Submissions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+
+        header {
+            background-color: #8a7b6b; /* Header color */
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin: 20px;
+            text-decoration: none;
+            color: #007bff; /* Link color */
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            text-decoration: underline; /* Underline on hover */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .submission-item {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+
+        /* Define distinct background colors for each element in the submission item */
+        .submission-item h4 {
+            background-color: #a3d8e3; /* Light teal */
+            padding: 5px;
+            border-radius: 4px;
+            margin: 0;
+        }
+
+        .submission-item p {
+            margin: 5px 0;
+            padding: 8px; /* Add padding to the paragraph for better spacing */
+        }
+
+        .submission-item p:first-of-type {
+            background-color: #ffcccb; /* Light red for Submitted By */
+            border-radius: 4px;
+        }
+
+        .submission-item p:nth-of-type(2) {
+            background-color: #d9edf7; /* Light blue for Content */
+            border-radius: 4px;
+        }
+
+        .submission-item p:nth-of-type(3) {
+            background-color: #dff0d8; /* Light green for Submission Date */
+            border-radius: 4px;
+        }
+
+        .submission-item p:nth-of-type(4) {
+            background-color: #fcf8e3; /* Light yellow for Score */
+            border-radius: 4px;
+        }
+
+        .submission-item p:nth-of-type(5) {
+            background-color: #f2dede; /* Light pink for Graded Status */
+            border-radius: 4px;
+        }
+
+        .submission-item pre {
+            background-color: #f3f3f3; /* Light grey for Student Answers */
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap; /* Ensure the text wraps correctly */
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>View Student Submissions</h1>
+</header>
+
+<a href="teacherdashboard.html" class="back-link">Return to Teacher Dashboard</a>
+
+<div class="container">
+    <h3>Student Submissions</h3>
+    <div class="error-message" id="error-message"></div>
+    <div id="submissionList"></div> <!-- List of submissions will be dynamically populated -->
+</div>
+
+<script>
+// Function to fetch submissions for a specific assignment
+async function fetchSubmissions(assignmentId) {
+    const token = localStorage.getItem('token'); // Retrieve the token from local storage
+
+    try {
+        const response = await fetch(`http://localhost:9000/api/submissions/submissions`, {
+            headers: {
+                'Authorization': `Bearer ${token}` // Include the token in the Authorization header
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch submissions: ' + response.statusText);
+        }
+
+        const submissions = await response.json(); // Get the list of submissions
+        displaySubmissions(submissions); // Call function to display submissions
+    } catch (error) {
+        console.error('Error fetching submissions:', error);
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Unable to load submissions. Please try again later.';
+        errorMessage.style.display = 'block';
+    }
+}
+
+// Function to display fetched submissions
+function displaySubmissions(submissions) {
+    const submissionList = document.getElementById('submissionList');
+    submissionList.innerHTML = ''; // Clear existing submissions
+
+    // Check if submissions is an array
+    if (!Array.isArray(submissions)) {
+        console.error('Expected submissions to be an array, but received:', submissions);
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Unexpected data format received from the server.';
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    // Populate the submissions list
+    if (submissions.length === 0) {
+        submissionList.innerHTML = '<p>No submissions found for this assignment.</p>'; // Message for no submissions
+    } else {
+        submissions.forEach(submission => {
+            const submissionItem = document.createElement('div');
+            submissionItem.className = 'submission-item';
+            submissionItem.innerHTML = `
+                <h4>Submission ID: ${submission.submission_id}</h4>
+                <p><strong>Submitted By:</strong> Student ID ${submission.student_id}</p>
+                <p><strong>Content:</strong> ${submission.content}</p>
+                <p><strong>Submission Date:</strong> ${new Date(submission.submission_date).toLocaleString()}</p>
+                <p><strong>Score:</strong> ${submission.score || 'Not Graded'}</p>
+                <p><strong>Graded:</strong> ${submission.graded ? 'Yes' : 'No'}</p>
+                <pre><strong>Student Answers:</strong> ${JSON.stringify(submission.student_answers, null, 2)}</pre>
+            `;
+            submissionList.appendChild(submissionItem);
+        });
+    }
+}
+
+// Load submissions for a specific assignment on page load
+const assignmentId = 1; // Replace this with the actual assignment ID you wish to use
+fetchSubmissions(assignmentId);
+</script>
+
+</body>
+</html>

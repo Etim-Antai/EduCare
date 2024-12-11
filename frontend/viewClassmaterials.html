@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Class Materials</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #8a7b6b; /* Header color */
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin: 20px;
+            text-decoration: none;
+            color: #007bff; /* Link color */
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline; /* Underline on hover */
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .material-item {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f3f3f3;
+            transition: background-color 0.3s;
+        }
+        .material-item:hover {
+            background-color: #e2e2e2; /* Change background on hover */
+        }
+        .error-message {
+            color: red;
+            margin: 10px;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>View Class Materials</h1>
+</header>
+
+<a href="teacherdashboard.html" class="back-link">Return to Teacher Dashboard</a>
+
+<div class="container">
+    <h3>All Class Materials</h3>
+    <div class="error-message" id="error-message"></div>
+    <div id="materialList"></div> <!-- List of materials will be dynamically populated here -->
+</div>
+
+<script>
+// Function to fetch all class materials
+async function fetchClassMaterials() {
+    const token = localStorage.getItem('token'); // Retrieve the token from local storage
+
+    try {
+        const response = await fetch('http://localhost:9000/api/teachers/materials', {
+            headers: {
+                'Authorization': `Bearer ${token}` // Include the token in the Authorization header
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch materials: ' + response.statusText);
+        }
+
+        const result = await response.json(); // Get the list of materials
+        console.log('Fetched materials:', result); // Log the fetched materials
+
+        // Accessing the 'data' property to get the materials array
+        displayMaterials(result.data); // Call function to display materials
+    } catch (error) {
+        console.error('Error fetching materials:', error);
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Unable to load materials. Please try again later.';
+        errorMessage.style.display = 'block';
+    }
+}
+
+// Function to display fetched materials
+function displayMaterials(materials) {
+    const materialList = document.getElementById('materialList');
+    materialList.innerHTML = ''; // Clear existing materials
+
+    // Check if materials is an array
+    if (!Array.isArray(materials)) {
+        console.error('Expected materials to be an array, but received:', materials);
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Unexpected data format received from the server.';
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    // Populate the materials list
+    if (materials.length === 0) {
+        materialList.innerHTML = '<p>No materials found.</p>'; // Message for no materials
+    } else {
+        materials.forEach(material => {
+            const materialItem = document.createElement('div');
+            materialItem.className = 'material-item';
+            materialItem.innerHTML = `
+                <h4>${material.title}</h4>
+                <p>${material.description}</p>
+                <p><strong>Uploaded By:</strong> Teacher ID ${material.uploaded_by}</p>
+                <p><strong>Upload Date:</strong> ${new Date(material.upload_date).toLocaleString()}</p>
+                <a href="${material.file_url}" target="_blank">View Material</a>
+            `;
+            materialList.appendChild(materialItem);
+        });
+    }
+}
+
+// Load all class materials on page load
+fetchClassMaterials();
+</script>
+
+</body>
+</html>

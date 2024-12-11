@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Attendance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f4f4f4;
+        }
+
+        .back-to-dashboard {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007bff; /* Same color as header */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            float: right;
+        }
+
+        .back-to-dashboard:hover {
+            background-color: #0056b3; /* Darker shade for hover effect */
+        }
+
+        #loading {
+            display: none; /* Hidden by default */
+            margin-top: 10px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #message {
+            color: red; /* For error messages */
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>View Attendance</h1>
+    </div>
+
+    <div class="container">
+        <div id="loading">Loading attendance...</div> <!-- Loading indicator -->
+        <div id="message"></div> <!-- Error message display -->
+        <table id="attendanceList">
+            <thead>
+                <tr>
+                    <th>Attendance ID</th>
+                    <th>Student ID</th>
+                    <th>Class ID</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Attendance records will be dynamically populated here -->
+            </tbody>
+        </table>
+
+        <a href="admindashboard.html" class="back-to-dashboard">Back to Dashboard</a> <!-- Link back to admin dashboard -->
+    </div>
+
+    <script>
+        // Check if the token exists; if not, redirect to the login page
+        function checkLogin() {
+            const token = sessionStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'adminLogin.html'; // Redirect if not logged in
+            }
+        }
+
+        // Fetch attendance list from the API
+        async function fetchAttendance() {
+            const token = sessionStorage.getItem('token'); // Retrieve JWT token from session storage
+
+            document.getElementById('loading').style.display = 'block';  // Show loading message
+            document.getElementById('message').textContent = ''; // Clear previous messages
+
+            try {
+                const response = await fetch('http://localhost:9000/api/attendance/attendance', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include the token in the Authorization header
+                    }
+                });
+
+                if (response.status === 401) {
+                    throw new Error('Unauthorized access. Please log in again.');
+                }
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const attendanceTable = document.getElementById('attendanceList').getElementsByTagName('tbody')[0];
+                attendanceTable.innerHTML = ''; // Clear existing data
+
+                // Populate the table with attendance data
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(entry => {
+                        const row = attendanceTable.insertRow();
+                        row.insertCell(0).innerText = entry.attendance_id; // Display Attendance ID
+                        row.insertCell(1).innerText = entry.student_id; // Display Student ID
+                        row.insertCell(2).innerText = entry.class_id; // Display Class ID
+                        row.insertCell(3).innerText = new Date(entry.date).toLocaleDateString(); // Display Date
+                        row.insertCell(4).innerText = entry.status; // Display Status
+                    });
+                } else {
+                    document.getElementById('message').textContent = "No attendance records found.";
+                }
+            } catch (error) {
+                console.error('Error fetching attendance:', error);
+                document.getElementById('message').textContent = "An error occurred while fetching attendance: " + error.message;
+            } finally {
+                document.getElementById('loading').style.display = 'none'; // Hide loading message
+            }
+        }
+
+        // Call functions on page load
+        window.onload = function() {
+            checkLogin(); // Check if logged in
+            fetchAttendance(); // Load attendance when the page is ready
+        };
+    </script>
+</body>
+</html>

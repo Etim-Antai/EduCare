@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Classes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f4f4f4;
+        }
+
+        .back-to-dashboard {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007bff; /* Same color as header */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            float: right;
+        }
+
+        .back-to-dashboard:hover {
+            background-color: #0056b3; /* Darker shade for hover effect */
+        }
+
+        #loading {
+            display: none; /* Hidden by default */
+            margin-top: 10px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #message {
+            color: red; /* For error messages */
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>View Classes</h1>
+    </div>
+
+    <div class="container">
+        <div id="loading">Loading classes...</div> <!-- Loading indicator -->
+        <div id="message"></div> <!-- Error message display -->
+        <table id="classList">
+            <thead>
+                <tr>
+                    <th>Class ID</th>
+                    <th>Class Name</th>
+                    <th>Teacher ID</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Class list will be dynamically populated here -->
+            </tbody>
+        </table>
+
+        <a href="admindashboard.html" class="back-to-dashboard">Back to Dashboard</a> <!-- Link back to admin dashboard -->
+    </div>
+
+    <script>
+        // Check if the token exists; if not redirect to the login page
+        function checkLogin() {
+            const token = sessionStorage.getItem('token'); // Use sessionStorage for consistency
+            if (!token) {
+                window.location.href = 'adminLogin.html'; // Redirect if not logged in
+            }
+        }
+
+        // Fetch class list from the API
+        async function fetchClasses() {
+            const token = sessionStorage.getItem('token'); // Retrieve JWT token from session storage
+
+            document.getElementById('loading').style.display = 'block';  // Show loading message
+            document.getElementById('message').textContent = ''; // Clear previous messages
+
+            try {
+                const response = await fetch('http://localhost:9000/api/admin/classes', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include the token in the Authorization header
+                    }
+                });
+
+                if (response.status === 401) {
+                    throw new Error('Unauthorized access. Please log in again.');
+                }
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} - ${response.statusText}`);
+                }
+                const data = await response.json();
+                const classTable = document.getElementById('classList').getElementsByTagName('tbody')[0];
+                classTable.innerHTML = ''; // Clear existing data
+
+                // Populate the table with class data
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(classEntry => {
+                        const row = classTable.insertRow();
+                        row.insertCell(0).innerText = classEntry.class_id; // Display Class ID
+                        row.insertCell(1).innerText = classEntry.class_name; // Display Class Name
+                        row.insertCell(2).innerText = classEntry.teacher_id; // Display Teacher ID
+                        row.insertCell(3).innerText = new Date(classEntry.start_date).toLocaleDateString(); // Display Start Date
+                        row.insertCell(4).innerText = new Date(classEntry.end_date).toLocaleDateString(); // Display End Date
+                    });
+                } else {
+                    document.getElementById('message').textContent = "No classes found.";
+                }
+            } catch (error) {
+                console.error('Error fetching classes:', error);
+                document.getElementById('message').textContent = "An error occurred while fetching classes: " + error.message;
+            } finally {
+                document.getElementById('loading').style.display = 'none'; // Hide loading message
+            }
+        }
+
+        // Call functions on page load
+        window.onload = function() {
+            checkLogin(); // Check if logged in
+            fetchClasses(); // Load classes when the page is ready
+        };
+    </script>
+</body>
+</html>

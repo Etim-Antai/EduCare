@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Teachers</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e5e5e5;
+        }
+
+        header {
+            background-color: #6a8b7a;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .container {
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+
+        h3 {
+            margin-bottom: 10px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        form input, form select {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            background-color: #6a8b7a;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #5b7a65;
+        }
+
+        .teacher-list {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f9f9f9;
+        }
+
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .delete-btn:hover {
+            background-color: darkred;
+        }
+
+        /* Action Button Styles in Table */
+        .action-button {
+            background-color: #28a745; /* Green for success actions */
+            padding: 5px 10px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .action-button:hover {
+            background-color: #218838; /* Dark green on hover */
+        }
+
+        .return-button {
+            background-color: #dc3545; /* Red for return button */
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none; /* Remove underline */
+            display: inline-block; /* Align as a button */
+            margin-bottom: 20px; /* Space below */
+        }
+
+        .return-button:hover {
+            background-color: #c82333; /* Darken on hover */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Manage Teachers</h1>
+    </header>
+
+    <div class="container">
+        <a href="admindashboard.html" class="return-button">Return to Dashboard</a> <!-- Link to dashboard -->
+
+        <h3>Add New Teacher</h3>
+        <form id="teacherForm">
+            <input type="text" id="first_name" placeholder="First Name" required>
+            <input type="text" id="last_name" placeholder="Last Name" required>
+            <input type="text" id="subject" placeholder="Subject" required>
+            <input type="text" id="phone" placeholder="Phone Number" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <input type="date" id="hire_date" placeholder="Hire Date" required>
+            <button type="submit" class="btn">Add Teacher</button>
+        </form>
+
+        <h3>Existing Teachers</h3>
+        <div class="teacher-list">
+            <table id="teacherTable">
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Subject</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="teacherTableBody">
+                    <!-- Teachers will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Load existing teachers on page load
+        window.onload = function() {
+            loadTeachers();
+        };
+
+        async function loadTeachers() {
+            const token = localStorage.getItem('token'); // Retrieve the token
+
+            try {
+                const response = await fetch('http://localhost:9000/api/admin/teachers', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch teachers');
+                }
+
+                const data = await response.json();
+                const teacherTableBody = document.getElementById('teacherTableBody');
+                teacherTableBody.innerHTML = ''; // Clear existing data
+
+                data.data.forEach(teacher => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${teacher.first_name}</td>
+                        <td>${teacher.last_name}</td>
+                        <td>${teacher.subject}</td>
+                        <td>${teacher.phone}</td>
+                        <td>${teacher.email}</td>
+                        <td>
+                            <button class="action-button" onclick="updateTeacher(${teacher.teacher_id})">Update</button>
+                            <button class="delete-btn" onclick="deleteTeacher(${teacher.teacher_id})">Delete</button>
+                        </td>
+                    `;
+                    teacherTableBody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error loading teachers:', error);
+                alert("Failed to load teachers. Please try again later.");
+            }
+        }
+
+        // Submit the form to add a new teacher
+        document.getElementById('teacherForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const token = localStorage.getItem('token'); // Retrieve the token
+            const data = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                subject: document.getElementById('subject').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                hire_date: document.getElementById('hire_date').value
+            };
+
+            // Debugging: Log the data being submitted
+            console.log('Teacher Data:', data); 
+
+            // Ensure all fields are filled
+            for (const key in data) {
+                if (!data[key]) {
+                    alert(`Field "${key.replace('_', ' ')}" is required.`); // Notify which field is missing
+                    return; // Exit if any required field is empty
+                }
+            }
+
+            try {
+                const response = await fetch('http://localhost:9000/api/admin/teachers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include token in the header
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add teacher');
+                }
+
+                alert("Teacher added successfully!");
+                loadTeachers(); // Reload teachers to see added teacher
+
+            } catch (error) {
+                console.error('Error adding teacher:', error);
+                alert("Failed to add teacher. Please try again later.");
+            }
+        });
+        
+        // Function to delete a teacher
+        async function deleteTeacher(teacherId) {
+            const token = localStorage.getItem('token'); // Retrieve the token
+
+            try {
+                const response = await fetch(`http://localhost:9000/api/admin/teachers/${teacherId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include token in the header
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete teacher');
+                }
+
+                alert("Teacher deleted successfully!");
+                loadTeachers(); // Reload the teacher list after deletion
+
+            } catch (error) {
+                console.error('Error deleting teacher:', error);
+                alert("Failed to delete teacher. Please try again later.");
+            }
+        }
+
+        // Function to update teacher info (assuming you will implement this)
+        function updateTeacher(teacherId) {
+            alert('Feature to update teacher coming soon!');
+            // You can implement the logic to open a modal and edit teacher info here
+        }
+    </script>
+</body>
+</html>

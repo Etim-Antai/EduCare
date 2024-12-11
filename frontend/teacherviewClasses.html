@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Classes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        nav {
+            margin: 10px 0;
+            background-color: #2c3e50;
+            text-align: center;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            padding: 10px 15px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            margin: 20px;
+            flex-direction: column; /* Stack elements vertically */
+        }
+
+        .class-item {
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .class-item h3 {
+            margin: 0;
+        }
+
+        .class-item p {
+            margin: 5px 0; /* Adjust margin for better spacing */
+        }
+
+        .actions {
+            margin-top: 10px;
+        }
+
+        .link {
+            color: #3498db;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #34495e;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>View Classes</h1>
+        <h2 id="teacherName"></h2>
+    </header>
+
+    <nav>
+        <a href="teacherDashboard.html">Dashboard</a>
+        <a href="teacherProfile.html">Profile</a>
+        <a href="gradeAssignments.html">Grade Assignments</a>
+        <a href="markAttendance.html">Manage Attendance</a>
+        <a href="teachernotification.html">Notifications</a>
+        <a href="logout.html">Logout</a>
+    </nav>
+
+    <div class="container">
+        <div id="classList">
+            <!-- Dynamic class items will be appended here through JavaScript -->
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 All Rights Reserved.</p>
+        <p>Contact Us: support@teacher-dashboard.com | Phone: (123) 456-7890</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            const firstName = localStorage.getItem('teacherFirstName');
+            const lastName = localStorage.getItem('teacherLastName');
+            document.getElementById('teacherName').innerText = `Welcome, ${firstName} ${lastName}!`;
+            loadClasses(); // Call to load classes
+        };
+
+        async function loadClasses() {
+            const token = localStorage.getItem('token'); // Get the token for authentication
+            try {
+                const response = await fetch('http://localhost:9000/api/classes', { // Adjust this endpoint to fetch classes
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include token in the header
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Validate if the data is in expected format
+                const classList = document.getElementById('classList');
+                classList.innerHTML = ''; // Clear any existing classes
+
+                if (data.data && data.data.length > 0) { // Check if there are classes
+                    data.data.forEach(classItem => {
+                        const classDiv = document.createElement('div');
+                        classDiv.className = 'class-item';
+                        classDiv.innerHTML = `
+                            <h3>${classItem.class_name}</h3>
+                            <p><strong>Class ID:</strong> ${classItem.class_id}</p>
+                            <p><strong>Time:</strong> ${classItem.time_of_day || 'No scheduled time'}</p>
+                            <p><strong>Duration:</strong> ${new Date(classItem.start_date).toLocaleDateString()} to ${new Date(classItem.end_date).toLocaleDateString()}</p>
+                            <div class="actions">
+                                <a class="link" href="viewAttendance.html?classId=${classItem.class_id}"><i class="fas fa-poll"></i> View Attendance</a>
+                                <a class="link" href="viewAssignments.html?classId=${classItem.class_id}"><i class="fas fa-file-alt"></i> View Assignments</a>
+                                <a class="link" href="classMaterials.html?classId=${classItem.class_id}"><i class="fas fa-folder-open"></i> Class Materials</a>
+                            </div>
+                        `;
+                        classList.appendChild(classDiv);
+                    });
+                } else {
+                    classList.innerHTML = '<p>No classes available.</p>'; // Notify if no classes are found
+                }
+            } catch (error) {
+                console.error('Error loading classes:', error);
+                alert("Failed to load classes. Please try again later.");
+            }
+        }
+    </script>
+</body>
+</html>

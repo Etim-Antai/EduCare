@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .login-container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .error-message {
+            color: red;
+            margin-top: 15px;
+        }
+        .success-message {
+            color: green;
+            margin-top: 15px;
+        }
+        #loading {
+            display: none;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Admin Login</h2>
+        <form id="adminLoginForm">
+            <div>
+                <label for="email">Email:</label>
+                <input type="email" id="email" placeholder="Enter Email" required>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Enter Password" required>
+            </div>
+            <button type="submit">Login</button>
+            <div id="loading">Logging in...</div> <!-- Loading indicator -->
+        </form>
+        <div id="message" class="error-message"></div> <!-- Error message display -->
+    </div>
+
+    <script>
+        document.getElementById("adminLoginForm").addEventListener("submit", async function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const email = document.getElementById("email").value.trim(); // Trim whitespace
+            const password = document.getElementById("password").value.trim(); // Trim whitespace
+            const messageDiv = document.getElementById("message");
+            const loadingDiv = document.getElementById("loading");
+
+            messageDiv.textContent = ''; // Clear previous messages
+            loadingDiv.style.display = 'block'; // Show loading indicator
+
+            try {
+                const response = await fetch("http://localhost:9000/api/auth/admin/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                // Check if the response is successful
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Login failed.');
+                }
+
+                // Parse JSON data from response
+                const data = await response.json();
+
+                // Check for success flag
+                if (data.token && data.admin) {
+                    // Store token and admin data in local storage
+                    localStorage.setItem('token', data.token); 
+                    localStorage.setItem('adminId', data.admin.id); 
+                    localStorage.setItem('adminFirstName', data.admin.first_name); 
+                    localStorage.setItem('adminLastName', data.admin.last_name); 
+
+                    // Log the token
+                    console.log('Token stored:', localStorage.getItem('token'));
+
+                    // Show success message and redirect
+                    messageDiv.className = 'success-message'; 
+                    messageDiv.textContent = "Login successful! Redirecting...";
+                    setTimeout(() => {
+                        window.location.href = 'admindashboard.html'; // Redirect to the dashboard
+                    }, 2000);
+                } else {
+                    throw new Error("Login failed: Missing token or admin information.");
+                }
+            } catch (error) {
+                messageDiv.className = 'error-message'; // Update class for error styles
+                messageDiv.textContent = "Error: " + error.message;
+            } finally {
+                loadingDiv.style.display = 'none'; // Hide loading indicator
+            }
+        });
+    </script>
+</body>
+</html>

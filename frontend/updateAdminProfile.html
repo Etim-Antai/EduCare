@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Admin Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f8ff; /* Light background color */
+            color: #333; /* Dark text color */
+        }
+        h1 {
+            color: #007BFF; /* Blue title */
+            text-align: center; /* Center the heading */
+        }
+        .profile-form {
+            border: 2px solid #007BFF; /* Blue border */
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px; /* Rounded corners */
+            background-color: #ffffff; /* White background */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+        }
+        .error-message {
+            color: red;
+            text-align: center; /* Centered error message */
+        }
+        .success-message {
+            color: green;
+            text-align: center; /* Centered success message */
+        }
+        .form-group {
+            margin-bottom: 15px; /* Space between form fields */
+        }
+        label {
+            display: block; /* Make label full width */
+            margin-bottom: 5px; /* Space between label and input */
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%; /* Full width inputs */
+            padding: 10px;
+            border: 1px solid #ccc; /* Light border */
+            border-radius: 5px; /* Rounded edges */
+        }
+        button {
+            background-color: #007BFF; /* Blue background */
+            color: white; /* White text */
+            padding: 10px 15px; /* Padding */
+            border: none; /* No border */
+            border-radius: 5px; /* Rounded corners */
+            cursor: pointer; /* Pointer cursor */
+            transition: background-color 0.3s; /* Smooth transition */
+            width: 100%; /* Full width button */
+        }
+        button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+    </style>
+</head>
+<body>
+
+<h1>Update Admin Profile</h1>
+
+<div class="profile-form">
+    <form id="updateProfileForm">
+        <div class="form-group">
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" placeholder="Enter First Name" required>
+        </div>
+        <div class="form-group">
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" placeholder="Enter Last Name" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" placeholder="Enter Email" required>
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone:</label>
+            <input type="text" id="phone" placeholder="Enter Phone Number" required>
+        </div>
+        <div class="form-group">
+            <label for="password">New Password (leave blank to keep current):</label>
+            <input type="password" id="password" placeholder="Enter New Password">
+        </div>
+        <button type="submit">Update Profile</button>
+        <div id="errorMessage" class="error-message"></div> <!-- Error message display -->
+        <div id="successMessage" class="success-message"></div> <!-- Success message display -->
+    </form>
+</div>
+
+<script>
+    async function fetchAdminProfile() {
+        const adminId = sessionStorage.getItem('adminId'); // Get the 'adminId' stored in sessionStorage
+        const token = sessionStorage.getItem('token'); // Get the authentication token
+
+        if (!adminId) {
+            document.getElementById('errorMessage').textContent = 'Admin ID not found. Please log in.';
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:9000/api/admin/profile?id=${adminId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Include the token in the Authorization header
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const adminData = await response.json();
+            if (adminData.data) {
+                // Populate form fields with existing data
+                document.getElementById('firstName').value = adminData.data.first_name;
+                document.getElementById('lastName').value = adminData.data.last_name;
+                document.getElementById('email').value = adminData.data.email;
+                document.getElementById('phone').value = adminData.data.phone;
+            } else {
+                throw new Error('No admin data found.');
+            }
+        } catch (error) {
+            document.getElementById('errorMessage').textContent = 'Error fetching admin profile: ' + error.message;
+        }
+    }
+
+    async function updateAdminProfile(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        const adminId = sessionStorage.getItem('adminId'); // Get the 'adminId' stored in sessionStorage
+        const token = sessionStorage.getItem('token'); // Get the authentication token
+
+        const firstName = document.getElementById('firstName').value;
+        const lastName = document.getElementById('lastName').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const password = document.getElementById('password').value;
+
+        const data = {
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            phone: phone,
+            ...(password && { password }) // Include password only if it's provided
+        };
+
+        try {
+            const response = await fetch(`http://localhost:9000/api/admin/profile?id=${adminId}`, {
+                method: "PUT", // Use PUT for updating
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Include the token in the Authorization header
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('successMessage').textContent = 'Profile updated successfully!';
+                document.getElementById('errorMessage').textContent = ''; // Clear any previous error message
+            } else {
+                throw new Error('Update failed: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            document.getElementById('errorMessage').textContent = 'Error updating profile: ' + error.message;
+            document.getElementById('successMessage').textContent = ''; // Clear success message if any
+        }
+    }
+
+    document.getElementById("updateProfileForm").addEventListener("submit", updateAdminProfile);
+    window.onload = fetchAdminProfile; // Fetch the profile data on page load
+</script>
+
+</body>
+</html>

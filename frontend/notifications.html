@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Notifications</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e5e5e5;
+        }
+
+        header {
+            background-color: #6a8b7a;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        #notificationList {
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+
+        .notification-item {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 15px;
+            transition: background-color 0.3s;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none; /* Remove the last border */
+        }
+
+        .notification-item:hover {
+            background-color: #f0f0f0; /* Highlight on hover */
+        }
+
+        .notification-message {
+            font-weight: bold;
+        }
+
+        .notification-type {
+            font-style: italic;
+            color: #6a8b7a;
+        }
+
+        .notification-date {
+            color: #777;
+            font-size: 0.9em;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #6a8b7a;
+            color: white;
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .link {
+            display: block;
+            margin-top: 10px;
+            color: #6a8b7a;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin Notifications</h1>
+        <a href="admin_dashboard.html" class="link">Return to Dashboard</a> <!-- Link to return -->
+    </header>
+
+    <div id="notificationList">
+        <p>Loading notifications...</p> <!-- Initial loading message -->
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Admin Dashboard</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            loadNotifications();
+        };
+
+        async function loadNotifications() {
+            const token = localStorage.getItem('token'); // Retrieve the token
+
+            try {
+                // Fetch notifications from the correct endpoint
+                const response = await fetch('http://localhost:9000/api/admin-notifications', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include token in the header for authentication
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch notifications');
+                }
+
+                const data = await response.json(); // Assuming the structure includes a 'notifications' array
+                const notifications = data.notifications || [];
+                const notificationList = document.getElementById('notificationList');
+                notificationList.innerHTML = ''; // Clear existing loading message
+
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = '<p>No new notifications</p>';
+                } else {
+                    notifications.forEach(notification => {
+                        const div = document.createElement('div');
+                        div.classList.add('notification-item');
+                        div.innerHTML = `
+                            <p class="notification-message">${notification.message}</p>
+                            <p class="notification-type">Type: ${notification.type}</p>
+                            <p class="notification-date">Created At: ${new Date(notification.created_at).toLocaleString()}</p>
+                        `;
+                        notificationList.appendChild(div);
+
+                        // Mark notification as read when clicked
+                        div.onclick = async () => {
+                            await markAsRead(notification.notification_id);
+                            div.style.opacity = 0.5; // Dim the notification to indicate it's read
+                        };
+                    });
+                }
+
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                alert("Failed to load notifications. Please try again later.");
+            }
+        }
+
+        async function markAsRead(notificationId) {
+            const token = localStorage.getItem('token'); // Retrieve the token
+
+            try {
+                const response = await fetch(`http://localhost:9000/api/admin-notifications/${notificationId}/read`, {
+                    method: 'PATCH', // Assuming you're PATCH-ing to mark as read
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include token in the header
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to mark notification as read');
+                }
+
+                console.log(`Notification ${notificationId} marked as read.`);
+
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+                alert("Failed to mark notification as read. Please try again later.");
+            }
+        }
+    </script>
+</body>
+</html>

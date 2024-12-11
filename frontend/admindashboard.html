@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e5e5e5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: #6a8b7a;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        nav {
+            margin: 10px 0;
+            background-color: #333;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 10px; /* Reduced margin for nav links */
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            margin: 20px;
+            flex-wrap: wrap; /* Allow wrapping for smaller screens */
+        }
+
+        .sidebar, .notification-sidebar {
+            width: 130px; /* Reduced width for sidebars */
+            background-color: #6b8c7b;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 0 10px;
+        }
+
+        .sidebar h3, .notification-sidebar h3 {
+            color: white;
+        }
+
+        .sidebar a, .notification-sidebar a {
+            display: block;
+            color: white;
+            padding: 8px; /* Reduced padding */
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar a:hover, .notification-sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            flex: 1; /* Take remaining space */
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap; /* Allow wrapping for smaller screens */
+        }
+
+        .stat-item {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #e7f3e7;
+            margin: 5px; /* Add margin for spacing */
+            min-width: 150px; /* Set a minimum width */
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #6a8b7a;
+            color: white;
+        }
+
+        .link {
+            display: block;
+            margin-top: 10px;
+            color: #6a8b7a;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        #loading {
+            display: none; /* Hidden by default */
+            color: #007bff;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .icon {
+            margin-right: 5px; /* Space between icon and text */
+        }
+
+        .stat-count {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center items in the line */
+        }
+
+        .stat-count i {
+            color: #6a8b7a; /* Match icon color to the theme */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin Dashboard</h1>
+        <h2 id="adminName"></h2>
+    </header>
+
+    <nav>
+        <a href="viewAdminProfile.html">Profile</a>
+        <a href="manageAdmins.html">Manage Admins</a>
+        <a href="manageTeachers.html">Manage Teachers</a>
+        <a href="managestudents.html">Manage Students</a>
+        <a href="adminReports.html">Reports</a>
+        <a href="notifications.html">Notifications</a>
+    </nav>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>Quick Actions</h3>
+            <a href="viewTeachers.html"><i class="fas fa-chalkboard-teacher"></i> View Teachers</a>
+            <a href="viewStudents.html"><i class="fas fa-user-graduate"></i> View Students</a>
+            <a href="viewAttendance.html"><i class="fas fa-poll"></i> View Attendance</a>
+            <a href="viewTimetable.html"><i class="fas fa-calendar-alt"></i> View Timetable</a>
+            <a href="createClasses.html"><i class="fas fa-book"></i> Create Class</a>
+            <a href="createTimetable.html"><i class="fas fa-calendar-plus"></i> Create Timetable</a>
+        </div>
+
+        <div class="main-content">
+            <div id="loading">Loading statistics...</div>
+            <div class="stats">
+                <div class="stat-item">
+                    <h3>Total Teachers</h3>
+                    <p class="stat-count" id="teacher-count"><i class="fas fa-chalkboard-teacher icon"></i> 0</p>
+                    <a class="link" href="viewTeachers.html">View Teachers</a>
+                </div>
+                <div class="stat-item">
+                    <h3>Total Students</h3>
+                    <p class="stat-count" id="student-count"><i class="fas fa-user-graduate icon"></i> 0</p>
+                    <a class="link" href="viewStudents.html">View Students</a>
+                </div>
+                <div class="stat-item">
+                    <h3>Total Classes</h3>
+                    <p class="stat-count" id="class-count"><i class="fas fa-chalkboard icon"></i> 0</p>
+                    <a class="link" href="viewClasses.html">View Classes</a>
+                </div>
+                <div class="stat-item">
+                    <h3>Total Admins</h3>
+                    <p class="stat-count" id="admin-count"><i class="fas fa-user icon"></i> 0</p>
+                    <a class="link" href="viewAdmins.html">View Admins</a>
+                </div>
+                <div class="stat-item">
+                    <h3>Total Timetables</h3>
+                    <p class="stat-count" id="timetable-count"><i class="fas fa-calendar-alt icon"></i> 0</p>
+                    <a class="link" href="viewTimetables.html">View Timetables</a>
+                </div>
+            </div>
+            <h2>Statistics Overview</h2>
+            <canvas id="statisticsChart"></canvas>
+            <h2>Grades Distribution</h2>
+            <canvas id="gradesDistributionChart"></canvas>
+            <h2>Attendance Trends Over Time</h2>
+            <canvas id="attendanceTrendsChart"></canvas>
+            <h2>Assignment Submission Rates</h2>
+            <canvas id="assignmentSubmissionRatesChart"></canvas>
+            <h2>Teacher Distribution by Subject</h2>
+            <canvas id="teacherDistributionChart"></canvas>
+            <h2>Student Enrollment Over Time</h2>
+            <canvas id="studentEnrollmentChart"></canvas>
+            <h2>Assignment Submissions per Class</h2>
+            <canvas id="assignmentSubmissionsChart"></canvas>
+            <h2>Attendance Overview</h2>
+            <canvas id="attendanceOverviewChart"></canvas>
+            <h2>Notifications Summary</h2>
+            <canvas id="notificationsSummaryChart"></canvas>
+        </div>
+
+        <div class="notification-sidebar">
+            <h3>Notifications</h3>
+            <ul id="notificationList">
+                <li><a href="#">Loading notifications...</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 All Rights Reserved.</p>
+        <p>Contact Us: support@admin-dashboard.com | Phone: (123) 456-7890</p>
+    </footer>
+
+    <script>
+        window.onload = function() {
+            const firstName = localStorage.getItem('adminFirstName');
+            const lastName = localStorage.getItem('adminLastName');
+            document.getElementById('adminName').innerText = `Welcome, ${firstName} ${lastName}!`;
+            loadStatistics();
+            loadNotifications();
+        };
+
+        async function loadStatistics() {
+            document.getElementById('loading').style.display = 'block'; // Show loading indicator
+            try {
+                const token = localStorage.getItem('token'); // Retrieve the token
+
+                const response = await fetch('http://localhost:9000/api/admin/stats', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include token in the header
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Assigning counts based on API response
+                document.getElementById('teacher-count').innerText = data.data.teacherCount || 0; // API should provide this
+                document.getElementById('student-count').innerText = data.data.studentCount || 0; // API should provide this
+                document.getElementById('class-count').innerText = data.data.classCount || 0; // Ensure classCount is correctly assigned
+                document.getElementById('admin-count').innerText = data.data.adminCount || 0; // API should provide this
+                document.getElementById('timetable-count').innerText = data.data.timetableCount || 0; // API should provide this
+
+                loadStatisticsChart(data.data); // Load the statistics bar chart
+
+                // Load other charts
+                await loadGradesDistribution(); // New addition
+                await loadAttendanceTrends(); // New addition
+                await loadAssignmentSubmissionRates(); // New addition
+                loadTeacherDistribution();
+                loadStudentEnrollment();
+                loadAssignmentSubmissions();
+                loadAttendanceOverview();
+                loadNotificationsSummary();
+
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                alert("Failed to load statistics. Please try again later.");
+            } finally {
+                document.getElementById('loading').style.display = 'none'; // Hide loading indicator
+            }
+        }
+
+        async function loadGradesDistribution() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/admin/grades-distribution', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            const ctx = document.getElementById('gradesDistributionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.data.map(item => `Class ${item.class_id}`), // Adjust this if class names are available
+                    datasets: [{
+                        label: 'Average Grades',
+                        data: data.data.map(item => item.average_grade),
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        async function loadAttendanceTrends() {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:9000/api/admin/attendance-trends', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        console.error('Error fetching attendance trends:', response.statusText);
+        return; // Exit function if there's an error
+    }
+
+    const data = await response.json();
+
+    // Prepare dataset values for the chart
+    const labels = data.data.map(item => `Month ${item.month} ${item.year}`); // Adjust labels to include year
+    const attendanceData = data.data.map(item => item.average_attendance);
+
+    const ctx = document.getElementById('attendanceTrendsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels, // Use the formatted labels
+            datasets: [{
+                label: 'Average Attendance (%)',
+                data: attendanceData, // Use attendance data
+                fill: false,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1 // Optional: Add tension for a smoother line
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Attendance Percentage (%)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month/Year'
+                    }
+                }
+            }
+        }
+    });
+}
+
+        async function loadAssignmentSubmissionRates() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/admin/assignment-submission-rates', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            const ctx = document.getElementById('assignmentSubmissionRatesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.data.map(item => `Class ${item.class_id}`), // Adjust labels for better readability
+                    datasets: [{
+                        label: 'Submissions Count',
+                        data: data.data.map(item => item.submission_count),
+                        backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                    }]
+                }
+            });
+        }
+
+        async function loadNotifications() {
+            const token = localStorage.getItem('token'); // Retrieve the token
+
+            try {
+                const response = await fetch('http://localhost:9000/api/admin-notifications', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch notifications');
+                }
+
+                const data = await response.json();
+                const notifications = data.notifications || [];
+                const notificationList = document.getElementById('notificationList');
+                notificationList.innerHTML = ''; // Clear existing notifications
+
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = '<li><a href="#">No new notifications</a></li>';
+                } else {
+                    notifications.forEach(notification => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `<a href="#">${notification.message}</a>
+                                             <small>Type: ${notification.type}</small>
+                                             <small>Created At: ${new Date(notification.created_at).toLocaleString()}</small>`;
+                        listItem.onclick = async () => {
+                            await markAsRead(notification.notification_id); // Mark as read when clicked
+                        };
+                        notificationList.appendChild(listItem);
+                    });
+                }
+
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                alert("Failed to load notifications. Please try again later.");
+            }
+        }
+
+        async function markAsRead(notificationId) {
+            const token = localStorage.getItem('token'); // Retrieve the token
+
+            try {
+                const response = await fetch(`http://localhost:9000/api/admin-notifications/${notificationId}/read`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to mark notification as read');
+                }
+
+                console.log(`Notification ${notificationId} marked as read.`)
+                loadNotifications(); // Refresh notifications after marking as read
+
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+                alert("Failed to mark notification as read. Please try again later.");
+            }
+        }
+
+        function loadStatisticsChart(data) {
+            const ctx = document.getElementById('statisticsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Teachers', 'Students', 'Classes', 'Admins', 'Timetables'],
+                    datasets: [{
+                        label: 'Counts',
+                        data: [data.teacherCount || 0, data.studentCount || 0, data.classCount || 0, data.adminCount || 0, data.timetableCount || 0],
+                        backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)', 'rgba(255, 206, 86, 0.6)', 'rgba(153, 102, 255, 0.6)', 'rgba(255, 159, 64, 0.6)']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadTeacherDistribution() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/admin/teacher-distribution', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            const ctx = document.getElementById('teacherDistributionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.data.map(item => item.subject),
+                    datasets: [{
+                        label: 'Teacher Distribution',
+                        data: data.data.map(item => item.teacher_count),
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    }]
+                }
+            });
+        }
+
+        async function loadStudentEnrollment() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/admin/student-enrollment', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            const ctx = document.getElementById('studentEnrollmentChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.data.map(item => `${item.enrollment_year}-${item.enrollment_month}`),
+                    datasets: [{
+                        label: 'Student Enrollment',
+                        data: data.data.map(item => item.student_count),
+                        fill: false,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                    }]
+                }
+            });
+        }
+
+        async function loadAssignmentSubmissions() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/admin/assignments-per-class', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            const ctx = document.getElementById('assignmentSubmissionsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.data.map(item => item.class_name),
+                    datasets: [{
+                        label: 'Submissions Count',
+                        data: data.data.map(item => item.submission_count),
+                        backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                    }]
+                }
+            });
+        }
+
+        async function loadAttendanceOverview() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/admin/attendance-overview', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            const ctx = document.getElementById('attendanceOverviewChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.data.map(item => item.class_name),
+                    datasets: [{
+                        label: 'Average Attendance Percentage',
+                        data: data.data.map(item => item.average_attendance_percentage),
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    }]
+                }
+            });
+        }
+
+        async function loadNotificationsSummary() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/admin/notifications-summary', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            const ctx = document.getElementById('notificationsSummaryChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.data.map(item => item.type),
+                    datasets: [{
+                        label: 'Notification Count',
+                        data: data.data.map(item => item.notification_count),
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>

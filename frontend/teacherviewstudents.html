@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Students</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9; /* Zebra striping for rows */
+        }
+
+        .back-to-dashboard {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007bff; /* Same color as header */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            float: right;
+        }
+
+        .back-to-dashboard:hover {
+            background-color: #0056b3; /* Darker shade for hover effect */
+        }
+
+        #loading {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        #message {
+            color: red; /* For error messages */
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>View Students</h1>
+    </div>
+
+    <div class="container">
+        <div id="loading">Loading students...</div> <!-- Loading indicator -->
+        <div id="message"></div> <!-- Error message display -->
+        <table id="studentTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Enrollment Date</th>
+                    <th>Class ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Student data will be populated here -->
+            </tbody>
+        </table>
+
+        <a href="teacherdashboard.html" class="back-to-dashboard">Back to Dashboard</a> <!-- Link back to the teacher dashboard -->
+    </div>
+
+    <script>
+        async function fetchStudents() {
+            const token = localStorage.getItem('token'); // Retrieve JWT token from local storage
+            document.getElementById('loading').style.display = 'block';  // Show loading message
+            document.getElementById('message').textContent = ''; // Clear previous messages
+
+            try {
+                const response = await fetch('http://localhost:9000/api/teachers/students', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                populateTable(data.data);
+            } catch (error) {
+                console.error('Error fetching students:', error);
+                document.getElementById('message').textContent = "An error occurred while fetching students: " + error.message;
+            } finally {
+                document.getElementById('loading').style.display = 'none'; // Hide loading message
+            }
+        }
+
+        function populateTable(students) {
+            const tableBody = document.getElementById('studentTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; // Clear existing data
+
+            students.forEach(student => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).innerText = student.student_id; // ID
+                row.insertCell(1).innerText = `${student.first_name} ${student.last_name}`; // Name
+                row.insertCell(2).innerText = student.email; // Email
+                row.insertCell(3).innerText = new Date(student.enrollment_date).toLocaleDateString(); // Enrollment Date
+                row.insertCell(4).innerText = student.class_id; // Class ID
+            });
+        }
+
+        // Call the function to load students when the page is ready
+        window.onload = fetchStudents;
+    </script>
+</body>
+</html>

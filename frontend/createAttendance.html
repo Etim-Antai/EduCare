@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Attendance Entry</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3; /* Darker shade for hover effect */
+        }
+
+        .back-to-dashboard {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007bff; 
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .back-to-dashboard:hover {
+            background-color: #0056b3; 
+        }
+
+        #message {
+            color: red; 
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        #successMessage {
+            color: green; 
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Create Attendance Entry</h1>
+    </div>
+
+    <div class="container">
+        <form id="attendanceForm">
+            <div class="form-group">
+                <label for="studentId">Student ID:</label>
+                <input type="text" id="studentId" placeholder="Enter Student ID" required>
+            </div>
+            <div class="form-group">
+                <label for="classId">Class ID:</label>
+                <input type="text" id="classId" placeholder="Enter Class ID" required>
+            </div>
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" required>
+            </div>
+            <div class="form-group">
+                <label for="status">Attendance Status:</label>
+                <select id="status" required>
+                    <option value="">Select Status</option>
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                </select>
+            </div>
+            <button type="submit">Add Attendance Entry</button>
+        </form>
+
+        <div id="message"></div> <!-- Error message display -->
+        <div id="successMessage"></div> <!-- Success message display -->
+        <a href="admindashboard.html" class="back-to-dashboard">Back to Dashboard</a> <!-- Link back to admin dashboard -->
+    </div>
+
+    <script>
+        // Check if the token exists; if not redirect to the login page
+        function checkLogin() {
+            const token = sessionStorage.getItem('token'); // Use sessionStorage for consistency
+            if (!token) {
+                window.location.href = 'adminLogin.html'; // Redirect if not logged in
+            }
+        }
+
+        // Add Attendance Entry
+        async function addAttendanceEntry(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const studentId = document.getElementById('studentId').value;
+            const classId = document.getElementById('classId').value;
+            const date = document.getElementById('date').value;
+            const status = document.getElementById('status').value;
+
+            const token = sessionStorage.getItem('token'); // Retrieve JWT token from session storage
+            const messageDiv = document.getElementById('message');
+            const successMessageDiv = document.getElementById('successMessage');
+            messageDiv.textContent = ''; // Clear previous messages
+            successMessageDiv.textContent = ''; // Clear previous success messages
+
+            try {
+                const response = await fetch('http://localhost:9000/api/attendance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include the token in the Authorization header
+                    },
+                    body: JSON.stringify({
+                        student_id: studentId, // Make sure these match what your backend expects
+                        class_id: classId,
+                        date: date,
+                        status: status
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to add attendance entry.');
+                }
+
+                const result = await response.json();
+                successMessageDiv.textContent = `Success! Attendance entry added with Attendance ID: ${result.attendanceId}`; // Adjust based on response
+                // Optionally, reset the form here if desired
+                document.getElementById('attendanceForm').reset(); 
+            } catch (error) {
+                console.error('Error adding attendance entry:', error);
+                messageDiv.textContent = "Error: " + error.message;
+            }
+        }
+
+        // Attach event listener to the form
+        document.getElementById('attendanceForm').addEventListener('submit', addAttendanceEntry);
+
+        // Call functions on page load
+        window.onload = function() {
+            checkLogin(); // Check if logged in
+        };
+    </script>
+</body>
+</html>

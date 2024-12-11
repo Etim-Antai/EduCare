@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Question</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #6c757d; /* Bootstrap gray color */
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        form {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, textarea, select, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin: 20px;
+            text-decoration: none;
+            color: #007bff; /* Bootstrap primary color */
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline; /* Underline on hover */
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Create New Question</h1>
+</header>
+
+<a href="teacherdashboard.html" class="back-link">Return to Teacher Dashboard</a>
+
+<form id="questionForm">
+    <label for="assignment_id">Assignment:</label>
+    <select id="assignment_id" name="assignment_id" required>
+        <option value="">Select an assignment</option> <!-- Default empty option -->
+    </select>
+
+    <label for="question_text">Question Text:</label>
+    <textarea id="question_text" name="question_text" rows="4" required></textarea>
+
+    <label for="correct_answer">Correct Answer:</label>
+    <textarea id="correct_answer" name="correct_answer" rows="2" required></textarea>
+
+    <label for="points">Points:</label>
+    <input type="number" id="points" name="points" required step="0.01" value="100.00">
+
+    <button type="submit">Create Question</button>
+    <div class="error-message" id="error-message" style="display:none;"></div>
+</form>
+
+<script>
+// Function to fetch assignments for the dropdown
+async function fetchAssignments() {
+    try {
+        const token = localStorage.getItem('token'); // Retrieve the token from local storage
+        const response = await fetch('http://localhost:9000/api/assignments', {
+            headers: {
+                'Authorization': `Bearer ${token}` // Include the token in the Authorization header
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch assignments: ' + response.statusText);
+        }
+
+        const assignments = await response.json(); // Get the list of assignments directly
+        console.log('Fetched assignments:', assignments); // Log the fetched assignments
+        
+        const assignmentSelect = document.getElementById('assignment_id');
+        assignmentSelect.innerHTML = '<option value="">Select an assignment</option>'; // Clear existing options
+
+        // Populate dropdown with fetched assignments
+        assignments.forEach(assign => {
+            const option = document.createElement('option');
+            option.value = assign.assignment_id; // Use assignment_id as the value
+            option.textContent = assign.title; // Display title of the assignment
+            assignmentSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error fetching assignments:', error);
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = 'Unable to load assignments. Please try again later.';
+        errorMessage.style.display = 'block';
+    }
+}
+
+// Call the fetchAssignments function to populate dropdown on page load
+fetchAssignments();
+
+document.getElementById('questionForm').addEventListener('submit', async function(event) {
+    event.preventDefault(); // Prevent form submission
+
+    // Clear previous error message
+    const errorMessage = document.getElementById('error-message');
+    errorMessage.style.display = 'none';
+    errorMessage.textContent = '';
+
+    const assignmentId = document.getElementById('assignment_id').value;
+    const questionText = document.getElementById('question_text').value;
+    const correctAnswer = document.getElementById('correct_answer').value;
+    const points = document.getElementById('points').value;
+
+    // Form data validation
+    if (!assignmentId || !questionText || !correctAnswer || points === '') {
+        errorMessage.textContent = 'All fields are required.';
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    const formData = {
+        assignment_id: assignmentId,
+        question_text: questionText,
+        correct_answer: correctAnswer,
+        points: points,
+    };
+
+    try {
+        const token = localStorage.getItem('token'); // Retrieve the token from local storage
+        const response = await fetch('http://localhost:9000/api/questions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Include the token in the Authorization header
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log('Question creation response:', result); // Log to inspect the response
+
+            if (result.question_id) {
+                alert('Question created successfully! ID: ' + result.question_id);
+            } else {
+                alert('Question created successfully, but no ID returned.');
+            }
+
+            document.getElementById('questionForm').reset(); // Reset the form after successful creation
+            fetchAssignments(); // Refresh the assignment options if needed
+        } else {
+            const error = await response.json();
+            errorMessage.textContent = 'Error creating question: ' + error.message;
+            errorMessage.style.display = 'block';
+        }
+    } catch (error) {
+        errorMessage.textContent = 'Network error: ' + error.message;
+        errorMessage.style.display = 'block';
+    }
+});
+</script>
+
+</body>
+</html>

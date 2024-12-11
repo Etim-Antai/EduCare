@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .profile-photo {
+            display: block;
+            margin: 10px auto;
+            width: 100px; /* Desired width */
+            height: 100px; /* Desired height */
+            border-radius: 50%; /* Circle effect */
+            object-fit: cover; /* To ensure the image covers the entire circle */
+            border: 2px solid #007bff; /* Blue border around the profile picture */
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .back-to-dashboard {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007bff; /* Same color as header */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            float: right;
+        }
+
+        .back-to-dashboard:hover {
+            background-color: #0056b3; /* Darker shade for hover effect */
+        }
+
+        #loading {
+            display: none; /* Hidden by default */
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #message {
+            color: red; /* For error messages */
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Attendance Management</h1>
+    </div>
+
+    <div class="container">
+        <img id="profilePhoto" class="profile-photo" src="" alt="Profile Picture"> <!-- Profile photo placeholder -->
+        <h2>Student Attendance</h2>
+        
+        <label for="studentId">Enter Student ID:</label>
+        <input type="text" id="studentId" placeholder="Student ID">
+        <button id="fetchStudentAttendance">Fetch Student Attendance</button>
+
+        <label for="classId">Enter Class ID:</label>
+        <input type="text" id="classId" placeholder="Class ID">
+        <button id="fetchClassAttendance">Fetch Class Attendance</button>
+
+        <button id="fetchAllAttendance">Fetch All Attendance</button>
+
+        <div id="loading">Loading attendance records...</div> <!-- Loading message -->
+        <div id="message"></div> <!-- Error message display -->
+
+        <h2>Attendance Records</h2>
+        <table id="attendanceTable">
+            <thead>
+                <tr>
+                    <th>Attendance ID</th>
+                    <th>Student ID</th>
+                    <th>Class ID</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Attendance data will be populated here -->
+            </tbody>
+        </table>
+
+        <a href="teacherdashboard.html" class="back-to-dashboard">Back to Dashboard</a> <!-- Link back to the teacher dashboard -->
+    </div>
+
+    <script>
+        document.getElementById('fetchStudentAttendance').addEventListener('click', fetchStudentAttendance);
+        document.getElementById('fetchClassAttendance').addEventListener('click', fetchClassAttendance);
+        document.getElementById('fetchAllAttendance').addEventListener('click', fetchAllAttendance);
+
+        async function fetchTeacherProfile() {
+            const token = localStorage.getItem('token'); // Retrieve token from localStorage
+            try {
+                const response = await fetch('http://localhost:9000/api/teachers/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                displayProfile(data.data);
+            } catch (error) {
+                console.error('Error fetching teacher profile:', error);
+                document.getElementById('message').textContent = "Error fetching profile data. Please try again.";
+            }
+        }
+
+        function displayProfile(teacher) {
+            const profilePhoto = document.getElementById('profilePhoto');
+            profilePhoto.src = `https://example.com/path-to-profile-pictures/${teacher.teacher_id}.jpg`; // Example profile image URL
+            profilePhoto.alt = `${teacher.first_name} ${teacher.last_name}'s Profile Picture`; // Alt text for accessibility
+        }
+
+        async function fetchAttendance(url) {
+            const token = localStorage.getItem('token'); // Retrieve the JWT token
+            const attendanceTableBody = document.getElementById('attendanceTable').getElementsByTagName('tbody')[0];
+            attendanceTableBody.innerHTML = ''; // Clear existing attendance data
+            document.getElementById('loading').style.display = 'block'; // Show loading message
+            document.getElementById('message').textContent = ''; // Clear previous messages
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                populateTable(data.data);
+            } catch (error) {
+                console.error('Error fetching attendance:', error);
+                document.getElementById('message').textContent = 'Failed to fetch attendance data. Please try again.';
+            } finally {
+                document.getElementById('loading').style.display = 'none'; // Hide loading message
+            }
+        }
+
+        function populateTable(attendanceRecords) {
+            const tableBody = document.getElementById('attendanceTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; // Clear existing data
+
+            attendanceRecords.forEach(record => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).innerText = record.attendance_id; // Attendance ID
+                row.insertCell(1).innerText = record.student_id; // Student ID
+                row.insertCell(2).innerText = record.class_id; // Class ID
+                row.insertCell(3).innerText = new Date(record.date).toLocaleDateString(); // Date
+                row.insertCell(4).innerText = record.status; // Status
+            });
+        }
+
+        async function fetchStudentAttendance() {
+            const studentId = document.getElementById('studentId').value; // Get student ID
+            const url = `http://localhost:9000/api/attendance/student/${studentId}`;
+            fetchAttendance(url);
+        }
+
+        async function fetchClassAttendance() {
+            const classId = document.getElementById('classId').value; // Get class ID
+            const url = `http://localhost:9000/api/attendance/class/${classId}`;
+            fetchAttendance(url);
+        }
+
+        async function fetchAllAttendance() {
+            const url = 'http://localhost:9000/api/attendance/attendance'; // Fetch all attendance records
+            fetchAttendance(url);
+        }
+
+        // Load the teacher profile when the page is ready
+        window.onload = function() {
+            fetchTeacherProfile(); // Fetch the teacher's profile
+        };
+    </script>
+</body>
+</html>

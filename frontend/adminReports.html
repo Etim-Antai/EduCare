@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Reports</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e5e5e5;
+        }
+
+        header {
+            background-color: #6a8b7a;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        nav {
+            margin: 10px 0;
+            background-color: #333;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+
+        .stat-item {
+            padding: 10px;
+            margin: 5px;
+            background: #f4f4f4;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            background-color: #6a8b7a;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #5b7a65;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Admin Reports</h1>
+    </header>
+
+    <nav>
+        <a href="viewAdminProfile.html">Profile</a>
+        <a href="manageAdmins.html">Manage Admins</a>
+        <a href="viewTeachers.html">Manage Teachers</a>
+        <a href="viewStudents.html">Manage Students</a>
+        <a href="reports.html">Reports</a>
+        <a href="notifications.html">Notifications</a> <!-- Link to notifications -->
+    </nav>
+
+    <div class="container">
+        <h3>Statistics Overview</h3>
+        
+        <div class="stat-item">
+            <h4>Total Classes</h4>
+            <p id="class-count">0</p>
+        </div>
+        
+        <div class="stat-item">
+            <h4>Total Students</h4>
+            <p id="student-count">0</p>
+        </div>
+
+        <div class="stat-item">
+            <h4>Total Teachers</h4>
+            <p id="teacher-count">0</p>
+        </div>
+
+        <h3>Attendance Records</h3>
+        <canvas id="attendanceChart"></canvas>
+        
+        <button class="btn" onclick="loadAttendance()">Refresh Attendance Data</button>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Admin Dashboard</p>
+    </footer>
+
+    <script>
+        window.onload = function () {
+            loadStatistics();
+            loadAttendance(); // Load attendance data on page load as well
+        };
+
+        async function loadStatistics() {
+            const token = localStorage.getItem('token'); // Retrieve the token
+
+            try {
+                const response = await fetch('http://localhost:9000/api/admin/statistics', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include token in the header
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch statistics');
+                }
+
+                const data = await response.json();
+                document.getElementById('class-count').innerText = data.classes || 0;
+                document.getElementById('student-count').innerText = data.students || 0;
+                document.getElementById('teacher-count').innerText = data.teachers || 0;
+
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                alert("Failed to load statistics. Please try again later.");
+            }
+        }
+
+        async function loadAttendance() {
+            const token = localStorage.getItem('token'); // Retrieve the token
+
+            try {
+                const response = await fetch('http://localhost:9000/api/attendance/statistics', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch attendance data');
+                }
+
+                const data = await response.json();
+                renderAttendanceChart(data); // Pass attendance data to the chart function
+
+            } catch (error) {
+                console.error('Error loading attendance:', error);
+                alert("Failed to load attendance data. Please try again later.");
+            }
+        }
+
+        function renderAttendanceChart(data) {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+            const attendanceData = {
+                labels: ['Present', 'Absent'], // Customize based on your data
+                datasets: [{
+                    label: 'Attendance',
+                    data: [data.present || 0, data.absent || 0], // Replace with actual data points
+                    backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)']
+                }]
+            };
+
+            new Chart(ctx, {
+                type: 'pie', // Using pie chart for attendance distribution
+                data: attendanceData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Attendance Overview'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
