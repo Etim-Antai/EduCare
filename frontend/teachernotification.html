@@ -7,32 +7,84 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
+
         header {
-            background-color: #8a7b6b; /* Header color */
+            background-color: #34495e;
             color: white;
-            padding: 15px;
             text-align: center;
+            padding: 20px 0;
         }
-        h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .back-link {
-            display: block;
-            text-align: center;
+
+        nav {
             margin: 10px 0;
+            background-color: #2c3e50;
+            text-align: center;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 15px;
             text-decoration: none;
-            color: #007bff; /* Link color */
-            font-weight: bold;
+            padding: 10px 15px;
+            transition: background-color 0.3s;
         }
-        .back-link:hover {
-            text-decoration: underline; /* Underline on hover */
+
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
         }
+
+        .container {
+            display: flex;
+            flex: 1;
+            margin: 20px;
+            flex-wrap: nowrap; /* Prevent wrapping */
+        }
+
+        .sidebar {
+            width: 120px;
+            background-color: #7f8c8d;
+            padding: 10px;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .sidebar h3 {
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .main-content {
+            flex: 1; 
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            margin: 0 10px;
+        }
+
         .notification-list {
             max-width: 600px;
             margin: 20px auto;
@@ -41,6 +93,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
+
         .notification-item {
             padding: 10px;
             margin-bottom: 10px;
@@ -49,87 +102,156 @@
             background-color: #f3f3f3;
             transition: background-color 0.3s;
         }
+
         .notification-item:hover {
             background-color: #e2e2e2; /* Change background on hover */
         }
+
         .error-message {
             color: red;
             margin: 10px 0;
             text-align: center;
             display: none; /* Initially hidden */
         }
+
         .notification-type {
             font-size: 0.9em; /* Smaller font for type */
             color: #555; /* Lighter color for type */
         }
+
         .notification-time {
             font-size: 0.8em; /* Smaller font for timestamp */
             color: #999; /* Grey color for timestamp */
         }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #34495e;
+            color: white;
+        }
+
+        .link {
+            display: block;
+            margin-top: 10px;
+            color: #34495e;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        /* Media Queries for responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px; /* Reduced width for mobile */
+            }
+
+            .notification-list {
+                max-width: 100%; /* Full width for mobile */
+            }
+        }
     </style>
 </head>
 <body>
+    <header>
+        <h1>Teacher Notifications</h1>
+        <h2 id="teacherName"></h2>
+    </header>
 
-<header>
-    <h1>Teacher Notifications</h1>
-</header>
+    <nav>
+        <a href="teacherProfile.html">Profile</a>
+        <a href="viewClasses.html">My Classes</a>
+        <a href="teacherviewstudents.html">My Students</a>
+        <a href="gradeAssignments.html">Grade Assignments</a>
+        <a href="markAttendance.html">Manage Attendance</a>
+        <a href="teachernotification.html">Notifications</a>
+        <a href="viewSubmissions.html">View Submissions</a>
+        <a href="teacherlogin.html">Logout</a>
+        <a href="teacherdashboard.html">Dashboard</a>
+    </nav>
 
-<a href="teacherdashboard.html" class="back-link">Return to Teacher Dashboard</a>
+    <div class="container">
+        <div class="sidebar">
+            <h3>Quick Actions</h3>
+            <a href="createAssignment.html"><i class="fas fa-pencil-alt"></i> Create Assignment</a>
+            <a href="viewTimetable.html"><i class="fas fa-calendar-alt"></i> View Timetable</a>
+            <a href="messageStudents.html"><i class="fas fa-comments"></i> Message Students</a>
+            <a href="viewResults.html"><i class="fas fa-bar-chart"></i> View Results</a>
+            <a href="studentAttendance.html"><i class="fas fa-check-square"></i> View Attendance</a>
+            <a href="createQuestions.html"><i class="fas fa-question"></i> Create Assignment Questions</a>
+            <a href="viewQuestions.html"><i class="fas fa-question-circle"></i> View Questions</a>
+            <a href="viewGrades.html"><i class="fas fa-file-alt"></i> View Grades</a>
+            <a href="createClassMaterial.html"><i class="fas fa-folder"></i> Create Class Materials</a>
+            <a href="viewClassMaterials.html"><i class="fas fa-folder-open"></i> View Class Materials</a>
+        </div>
 
-<div class="notification-list" id="notificationList">
-    <h3>Your Notifications</h3>
-    <div class="error-message" id="error-message" style="display:none;"></div>
-    <ul id="notifications"></ul> <!-- List of notifications -->
-</div>
+        <div class="main-content">
+            <div class="notification-list" id="notificationList">
+                <h3>Your Notifications</h3>
+                <div class="error-message" id="error-message" style="display:none;"></div>
+                <ul id="notifications"></ul> <!-- List of notifications -->
+            </div>
+        </div>
+    </div>
 
-<script>
-    async function loadNotifications() {
-        const token = localStorage.getItem('token');
-        
-        try {
-            const response = await fetch('http://localhost:9000/api/teacher-notifications/all', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+    <footer>
+        <p>&copy; 2023 All Rights Reserved.</p>
+        <p>Contact Us: support@teacher-dashboard.com | Phone: (123) 456-7890</p>
+    </footer>
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch notifications: ' + response.statusText);
-            }
+    <script>
+        window.onload = function() {
+            const firstName = localStorage.getItem('teacherFirstName');
+            const lastName = localStorage.getItem('teacherLastName');
+            document.getElementById('teacherName').innerText = `Welcome, ${firstName} ${lastName}!`;
+            loadNotifications();
+        };
 
-            const notifications = await response.json() || [];
+        async function loadNotifications() {
+            const token = localStorage.getItem('token');
             
-            const notificationList = document.getElementById('notifications');
-            notificationList.innerHTML = ''; // Clear existing notifications
-
-            // Populate the notification list
-            if (notifications.length === 0) {
-                notificationList.innerHTML = '<li>No new notifications.</li>';
-            } else {
-                notifications.forEach(notification => {
-                    const listItem = document.createElement('li');
-                    listItem.classList.add('notification-item');
-                    listItem.innerHTML = `
-                        <strong>${notification.message}</strong><br>
-                        <span class="notification-type">Type: ${notification.event_type}</span><br>
-                        <span class="notification-time">${new Date(notification.created_at).toLocaleString()}</span>
-                    `;
-                    notificationList.appendChild(listItem);
+            try {
+                const response = await fetch('http://localhost:9000/api/teachernotifications/all', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch notifications: ' + response.statusText);
+                }
+
+                const data = await response.json();
+                const notifications = data.notifications || []; // Ensure it's accessing the notifications array
+                
+                const notificationList = document.getElementById('notifications');
+                notificationList.innerHTML = ''; // Clear existing notifications
+
+                // Populate the notification list
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = '<li>No new notifications.</li>';
+                } else {
+                    notifications.forEach(notification => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('notification-item');
+                        listItem.innerHTML = `
+                            <strong>${notification.message}</strong><br>
+                            <span class="notification-type">Type: ${notification.event_type}</span><br>
+                            <span class="notification-time">${new Date(notification.created_at).toLocaleString()}</span>
+                        `;
+                        notificationList.appendChild(listItem);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                const errorMessage = document.getElementById('error-message');
+                errorMessage.textContent = 'Unable to load notifications. Please try again later.';
+                errorMessage.style.display = 'block';
             }
-        } catch (error) {
-            console.error('Error loading notifications:', error);
-            const errorMessage = document.getElementById('error-message');
-            errorMessage.textContent = 'Unable to load notifications. Please try again later.';
-            errorMessage.style.display = 'block';
         }
-    }
-
-    // Call loadNotifications on page load
-    window.onload = loadNotifications;
-</script>
-
+    </script>
 </body>
 </html>

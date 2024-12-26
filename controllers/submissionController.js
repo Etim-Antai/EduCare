@@ -1,12 +1,19 @@
 // controllers/submissionController.js
 const Submission = require('../models/submissionModel');
 const Question = require('../models/questionModel');
-const { createAssignmentSubmissionNotification } = require('../utils/notificationUtils'); // Import the notification utility
 const db = require('../config/db'); // Import the db connection
+const TeacherNotificationUtils = require('../utils/teacherNotificationUtils'); // Import teacher notification utils
 
 exports.submit = async (req, res) => {
     const { assignment_id, content, studentAnswers } = req.body; // Include student answers for grading
     const student_id = req.user.id; // Get the student ID from the authenticated JWT token
+
+    // Fetch the teacher ID based on the assignment ID
+    const teacher_id = await getTeacherIdByAssignmentId(assignment_id);
+    
+    if (!teacher_id) {
+        return res.status(404).json({ error: 'Teacher not found for this assignment.' });
+    }
 
     // Validation
     if (!assignment_id || !content || typeof studentAnswers !== 'object') {
@@ -19,6 +26,7 @@ exports.submit = async (req, res) => {
             assignment_id,
             student_id,
             content,
+            teacher_id // Include teacher_id in the submission
         });
 
         // Fetch questions related to the assignment
@@ -49,12 +57,20 @@ exports.submit = async (req, res) => {
 
         // Update the total score and graded status in the submission
         await Submission.updateScore(newSubmissionId, totalScore, gradedStatus);
-
         // Update student answers
         await Submission.updateStudentAnswers(newSubmissionId, studentAnswers);
 
-        // Log the submission notification for the student
-        await createAssignmentSubmissionNotification(student_id, assignment_id); // Log the submission notification
+        // Notify the relevant teacher about the submission
+        const studentDetails = await getStudentDetails(student_id); // Fetch the student's details for the notification
+
+        if (teacher_id) {
+            const message = `${studentDetails.first_name} ${studentDetails.last_name} has submitted their assignment with ID: ${assignment_id}.`;
+            await TeacherNotificationUtils.createNotification({
+                teacher_id: teacher_id,
+                message,
+                event_type: 'Assignment Submission'
+            });
+        }
 
         res.status(201).json({
             id: newSubmissionId,
@@ -68,7 +84,26 @@ exports.submit = async (req, res) => {
     }
 };
 
-// Note: Keep the existing automateGradeSubmission function if it stays unchanged
+const getTeacherIdByAssignmentId = async (assignment_id) => {
+    // Fetch the teacher ID based on the assignment's class association
+    const [assignment] = await db.query('SELECT class_id FROM assignments WHERE assignment_id = ?', [assignment_id]);
+    
+    if (assignment.length > 0) {
+        const class_id = assignment[0].class_id; // Get class ID from assignment
+        
+        // Fetch teacher ID from classes table
+        const [classInfo] = await db.query('SELECT teacher_id FROM classes WHERE class_id = ?', [class_id]);
+        return classInfo.length > 0 ? classInfo[0].teacher_id : null; // Return the teacher ID or null
+    }
+    return null; // Assignment not found or no class associated
+};
+
+const getStudentDetails = async (student_id) => {
+    const [student] = await db.query('SELECT first_name, last_name FROM students WHERE student_id = ?', [student_id]);
+    return student.length > 0 ? student[0] : null; // Return student details or null
+};
+
+// Note: Keep the existing automateGradeSubmission function intact if it stays unchanged
 exports.automateGradeSubmission = async (req, res) => {
     const submission_id = req.params.id;
     const { userCode, studentAnswers } = req.body; // The code submitted by the user and student answers.
@@ -110,15 +145,12 @@ exports.automateGradeSubmission = async (req, res) => {
             totalScore,
             gradedStatus // Return graded status (1 or 0)
         });
-        
+
     } catch (error) {
         console.error(`Error in automating grade submission: ${error.message}`);
         res.status(500).json({ error: error.message });
     }
 };
-
-
-
 
 exports.getAllSubmissions = async (req, res) => {
     try {

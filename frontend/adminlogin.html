@@ -35,6 +35,13 @@
             font-weight: bold;
             color: #007bff;
         }
+        input.error {
+            border-color: red;
+        }
+        button:disabled {
+            background-color: #ccc; /* Change button appearance when disabled */
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -49,7 +56,7 @@
                 <label for="password">Password:</label>
                 <input type="password" id="password" placeholder="Enter Password" required>
             </div>
-            <button type="submit">Login</button>
+            <button type="submit" id="loginButton">Login</button>
             <div id="loading">Logging in...</div> <!-- Loading indicator -->
         </form>
         <div id="message" class="error-message"></div> <!-- Error message display -->
@@ -59,13 +66,17 @@
         document.getElementById("adminLoginForm").addEventListener("submit", async function(event) {
             event.preventDefault(); // Prevent the default form submission
 
-            const email = document.getElementById("email").value.trim(); // Trim whitespace
-            const password = document.getElementById("password").value.trim(); // Trim whitespace
+            // Get input fields and message display elements
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
             const messageDiv = document.getElementById("message");
             const loadingDiv = document.getElementById("loading");
+            const loginButton = document.getElementById("loginButton");
 
-            messageDiv.textContent = ''; // Clear previous messages
+            // Clear previous messages and styles
+            messageDiv.textContent = ''; 
             loadingDiv.style.display = 'block'; // Show loading indicator
+            loginButton.disabled = true; // Disable the login button
 
             try {
                 const response = await fetch("http://localhost:9000/api/auth/admin/login", {
@@ -79,15 +90,15 @@
                 // Check if the response is successful
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || 'Login failed.');
+                    throw new Error(errorData.message || 'Login failed.'); // More generalized error message
                 }
 
-                // Parse JSON data from response
+                // Parse JSON data from the response
                 const data = await response.json();
 
                 // Check for success flag
                 if (data.token && data.admin) {
-                    // Store token and admin data in local storage
+                    // Store token and admin data in localStorage
                     localStorage.setItem('token', data.token); 
                     localStorage.setItem('adminId', data.admin.id); 
                     localStorage.setItem('adminFirstName', data.admin.first_name); 
@@ -100,7 +111,7 @@
                     messageDiv.className = 'success-message'; 
                     messageDiv.textContent = "Login successful! Redirecting...";
                     setTimeout(() => {
-                        window.location.href = 'admindashboard.html'; // Redirect to the dashboard
+                        window.location.href = 'db.html'; // Ensure this URL matches your setup
                     }, 2000);
                 } else {
                     throw new Error("Login failed: Missing token or admin information.");
@@ -108,8 +119,18 @@
             } catch (error) {
                 messageDiv.className = 'error-message'; // Update class for error styles
                 messageDiv.textContent = "Error: " + error.message;
+
+                // Highlight the fields that can cause a login failure
+                if (error.message.toLowerCase().includes('invalid email or password')) {
+                    document.getElementById("email").classList.add('error');
+                    document.getElementById("password").classList.add('error');
+                } else {
+                    document.getElementById("email").classList.remove('error'); // clear error for other messages
+                    document.getElementById("password").classList.remove('error'); // clear error for other messages
+                }
             } finally {
                 loadingDiv.style.display = 'none'; // Hide loading indicator
+                loginButton.disabled = false; // Enable the login button
             }
         });
     </script>

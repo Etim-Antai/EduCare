@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* General Styles */
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
@@ -18,16 +19,18 @@
         }
 
         header {
-            background-color: #34495e;
+            background-color: #34495e; /* Brand Color */
             color: white;
             text-align: center;
             padding: 20px 0;
+            font-size: 24px;
         }
 
         nav {
             margin: 10px 0;
-            background-color: #2c3e50;
+            background-color: #2c3e50; /* Darker Brand Color */
             text-align: center;
+            padding: 10px 0;
         }
 
         nav a {
@@ -36,6 +39,7 @@
             text-decoration: none;
             padding: 10px 15px;
             transition: background-color 0.3s;
+            font-size: 16px;
         }
 
         nav a:hover {
@@ -47,12 +51,12 @@
             display: flex;
             flex: 1;
             margin: 20px;
-            flex-wrap: nowrap; /* Prevent wrapping */
+            flex-wrap: wrap;
         }
 
         .sidebar {
-            width: 120px;
-            background-color: #7f8c8d;
+            width: 120px; /* Adjusted width of sidebar */
+            background-color: #7f8c8d; /* Brand Color */
             padding: 10px;
             border-radius: 5px;
             margin-right: 10px;
@@ -60,7 +64,7 @@
 
         .sidebar h3 {
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             text-align: center;
         }
 
@@ -71,6 +75,9 @@
             text-decoration: none;
             border-radius: 5px;
             transition: background-color 0.3s;
+            font-size: 12px;
+            text-align: left;
+            margin-bottom: 5px;
         }
 
         .sidebar a:hover {
@@ -84,11 +91,15 @@
             border-radius: 5px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
             margin: 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .stats {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
+            width: 100%;
             margin-bottom: 20px;
         }
 
@@ -97,47 +108,48 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             background-color: #ecf0f1;
-            margin: 5px; 
-            flex-grow: 1; 
+            margin: 10px; 
+            flex-grow: 1;
             padding: 15px;
-            position: relative; /* Allow positioning for icon */
+            position: relative;
+            font-size: 14px;
         }
 
         .stat-item i {
             position: absolute;
             left: 15px;
             top: 15px;
-            font-size: 24px;
+            font-size: 20px;
             color: #34495e;
+        }
+
+        canvas {
+            width: 100% !important;
+            max-width: 800px;
+            height: 400px !important;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: white;
         }
 
         footer {
             text-align: center;
             padding: 10px;
-            background-color: #34495e;
+            background-color: #34495e; /* Brand Color */
             color: white;
-        }
-
-        .link {
-            display: block;
-            margin-top: 10px;
-            color: #34495e;
-        }
-
-        .link:hover {
-            text-decoration: underline;
+            font-size: 14px;
         }
 
         #loading {
-            display: none; 
             color: #007bff;
             font-weight: bold;
             margin-top: 10px;
         }
 
         .notification-sidebar {
-            width: 200px; /* Adjusted width */
-            background-color: #95a5a6;
+            width: 220px; /* Notification sidebar with adjusted width */
+            background-color: #95a5a6; /* Notifications color */
             padding: 10px;
             border-radius: 5px;
             margin-left: 10px;
@@ -145,7 +157,7 @@
 
         .notification-sidebar h3 {
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             text-align: center;
         }
 
@@ -159,6 +171,7 @@
         .notification-sidebar a {
             color: white;
             text-decoration: none;
+            font-size: 12px;
         }
 
         .notification-sidebar a:hover {
@@ -168,7 +181,7 @@
         /* Media Queries for responsiveness */
         @media (max-width: 768px) {
             .sidebar {
-                width: 80px; /* Reduced width for mobile */
+                width: 100px; /* Reduced width for mobile */
             }
 
             .notification-sidebar {
@@ -176,11 +189,12 @@
             }
 
             .stat-item {
-                font-size: 0.8em; /* Adjust font size for mobile */
+                font-size: 12px; /* Adjust font size for mobile */
             }
         }
     </style>
 </head>
+
 <body>
     <header>
         <h1>Teacher Dashboard</h1>
@@ -190,12 +204,11 @@
     <nav>
         <a href="teacherProfile.html">Profile</a>
         <a href="viewClasses.html">My Classes</a>
-        <a href="teacherviewstudents.html">My Students</a>
+        <a href="viewStudents.html">My Students</a>
         <a href="gradeAssignments.html">Grade Assignments</a>
-        <a href="markAttendance.html">Manage Attendance</a>
-        <a href="teachernotification.html">Notifications</a>
-        <a href="viewSubmissions.html">View Submissions</a>
-        <a href="teacherlogin.html">Logout</a>
+        <a href="manageAttendance.html">Manage Attendance</a>
+        <a href="viewNotifications.html">Notifications</a>
+        <a href="logout.html">Logout</a>
     </nav>
 
     <div class="container">
@@ -205,16 +218,11 @@
             <a href="viewTimetable.html"><i class="fas fa-calendar-alt"></i> View Timetable</a>
             <a href="messageStudents.html"><i class="fas fa-comments"></i> Message Students</a>
             <a href="viewResults.html"><i class="fas fa-bar-chart"></i> View Results</a>
-            <a href="studentAttendance.html"><i class="fas fa-check-square"></i> View Attendance</a>
-            <a href="createQuestions.html"><i class="fas fa-question"></i> Create Assignment Questions</a>
-            <a href="viewQuestions.html"><i class="fas fa-question-circle"></i> View Questions</a>
-            <a href="viewGrades.html"><i class="fas fa-file-alt"></i> View Grades</a>
-            <a href="createClassMaterial.html"><i class="fas fa-folder"></i> Create Class Materials</a>
-            <a href="viewClassMaterials.html"><i class="fas fa-folder-open"></i> View Class Materials</a>
+            <a href="manageMaterials.html"><i class="fas fa-folder"></i> Manage Materials</a>
         </div>
 
         <div class="main-content">
-            <div id="loading">Loading statistics...</div> 
+            <div id="loading">Loading statistics...</div>
             <div class="stats">
                 <div class="stat-item">
                     <i class="fas fa-chalkboard-teacher"></i>
@@ -234,6 +242,20 @@
             </div>
             <h2>Statistics Overview</h2>
             <canvas id="statisticsChart"></canvas>
+            <h2>Grades Distribution</h2>
+            <canvas id="gradesDistributionChart"></canvas>
+            <h2>Attendance Trends Over Time</h2>
+            <canvas id="attendanceTrendsChart"></canvas>
+            <h2>Assignment Submission Rates</h2>
+            <canvas id="assignmentSubmissionRatesChart"></canvas>
+            <h2>Total Students by Class</h2>
+            <canvas id="totalStudentsByClassChart"></canvas>
+            <h2>Assignments Completion Stats</h2>
+            <canvas id="assignmentsCompletionChart"></canvas>
+            <h2>Overall Attendance Stats</h2>
+            <canvas id="overallAttendanceChart"></canvas>
+            <h2>Recent Submission Rates</h2>
+            <canvas id="recentSubmissionRatesChart"></canvas>
         </div>
 
         <div class="notification-sidebar">
@@ -251,9 +273,11 @@
 
     <script>
         window.onload = function() {
+            const teacherId = localStorage.getItem('teacherId'); 
             const firstName = localStorage.getItem('teacherFirstName');
             const lastName = localStorage.getItem('teacherLastName');
             document.getElementById('teacherName').innerText = `Welcome, ${firstName} ${lastName}!`;
+
             loadStatistics();
             loadNotifications();
         };
@@ -263,7 +287,7 @@
             try {
                 const token = localStorage.getItem('token');
 
-                const response = await fetch('http://localhost:9000/api/teacher/statistics', {
+                const response = await fetch('http://localhost:9000/api/teachers/dashboard/stats', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -276,10 +300,18 @@
                 }
 
                 const data = await response.json();
-                document.getElementById('class-count').innerText = data.classes || 0;
-                document.getElementById('student-count').innerText = data.students || 0;
-                document.getElementById('assignment-count').innerText = data.assignments || 0;
+                document.getElementById('class-count').innerText = data.totalClasses || 0;
+                document.getElementById('student-count').innerText = data.totalStudents || 0;
+                document.getElementById('assignment-count').innerText = data.totalAssignments || 0;
+
                 loadStatisticsChart(data);
+                await loadGradesDistribution();
+                await loadAttendanceTrends();
+                await loadAssignmentSubmissionRates();
+                await loadTotalStudentsByClass();
+                await loadAssignmentsCompletionStats();
+                await loadOverallAttendanceStats();
+                await loadRecentSubmissionRates();
             } catch (error) {
                 console.error('Error loading statistics:', error);
                 alert("Failed to load statistics. Please try again later.");
@@ -290,9 +322,8 @@
 
         async function loadNotifications() {
             const token = localStorage.getItem('token');
-
             try {
-                const response = await fetch('http://localhost:9000/api/teacher-notifications', {
+                const response = await fetch('http://localhost:9000/api/teachernotifications/all', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -305,19 +336,18 @@
                 }
 
                 const data = await response.json();
-                const notifications = data.notifications || []; // Ensure it's accessing the notifications array
+                const notifications = data.notifications || [];
                 const notificationList = document.getElementById('notificationList');
-                notificationList.innerHTML = ''; // Clear the existing loading message
+                notificationList.innerHTML = '';
 
                 if (notifications.length === 0) {
                     notificationList.innerHTML = '<li><a href="#">No new notifications</a></li>';
                 } else {
                     notifications.forEach(notification => {
                         const listItem = document.createElement('li');
-                        listItem.innerHTML = `
-                            <a href="#">${notification.message}</a>
-                            <small>Type: ${notification.type}</small>
-                            <small>Created At: ${new Date(notification.created_at).toLocaleString()}</small>`;
+                        listItem.innerHTML = `<a href="#">${notification.message}</a>
+                                             <small>Type: ${notification.type}</small>
+                                             <small>Created At: ${new Date(notification.created_at).toLocaleString()}</small>`;
                         listItem.onclick = async () => {
                             await markAsRead(notification.notification_id);
                         };
@@ -334,7 +364,7 @@
             const token = localStorage.getItem('token');
 
             try {
-                const response = await fetch(`http://localhost:9000/api/teacher-notifications/${notificationId}/read`, {
+                const response = await fetch(`http://localhost:9000/api/teacher/notifications/${notificationId}/read`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -361,7 +391,7 @@
                     labels: ['Classes', 'Students', 'Assignments'],
                     datasets: [{
                         label: 'Counts',
-                        data: [data.classes || 0, data.students || 0, data.assignments || 0],
+                        data: [data.totalClasses || 0, data.totalStudents || 0, data.totalAssignments || 0],
                         backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)', 'rgba(255, 206, 86, 0.6)']
                     }]
                 },
@@ -375,6 +405,385 @@
                 }
             });
         }
+
+        async function loadGradesDistribution() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/teachers/dashboard/average-grades', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch grades distribution:', response.statusText);
+                alert("Failed to load grades distribution. Please try again.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log('Grades Distribution Data:', data); // Debugging log
+
+            // Ensure data is structured correctly
+            if (!Array.isArray(data.data) || !Array.isArray(data.data[0])) {
+                console.error('Expected data.data[0] to be an array:', data);
+                alert("Failed to load grades distribution.");
+                return;
+            }
+
+            const ctx = document.getElementById('gradesDistributionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.data[0].map(item => item.class_name || `Class ${item.class_id}`),
+                    datasets: [{
+                        label: 'Average Grades',
+                        data: data.data[0].map(item => item.avg_grade !== null ? item.avg_grade : 0), // Ensure grades are numeric
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadAttendanceTrends() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/teachers/dashboard/attendance', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch attendance trends:', response.statusText);
+                alert("Failed to load attendance trends.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log('Attendance Trends Data:', data); // Debugging log
+
+            if (!Array.isArray(data.data) || !Array.isArray(data.data[0])) {
+                console.error('Expected data.data[0] to be an array:', data);
+                alert("Failed to load attendance trends.");
+                return;
+            }
+
+            const attendanceArray = data.data[0]; // Access the first sub-array
+            const ctx = document.getElementById('attendanceTrendsChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: attendanceArray.map(item => item.class_name || 'Unknown Class'), // Use class_name for labeling
+                    datasets: [{
+                        label: 'Attendance Count',
+                        data: attendanceArray.map(item => item.count || 0), // Default to 0 if undefined
+                        backgroundColor: attendanceArray.map(item => item.status === 'Present' ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'),
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Attendance Count'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Classes'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadAssignmentSubmissionRates() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/teachers/dashboard/submission-rates', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch assignment submission rates:', response.statusText);
+                alert("Failed to load assignment submission rates.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log('Assignment Submission Rates Data:', data); // Debugging log
+
+            // Check the structure of the data
+            if (!Array.isArray(data.data) || !Array.isArray(data.data[0])) {
+                console.error('Expected data.data[0] to be an array:', data);
+                alert("No assignment submission data available.");
+                return;
+            }
+
+            const submissionArray = data.data[0]; // Access the relevant data array
+
+            const ctx = document.getElementById('assignmentSubmissionRatesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: submissionArray.map(item => item.class_name || 'Unknown Class'), // Class name for labeling
+                    datasets: [{
+                        label: 'Submission Count',
+                        data: submissionArray.map(item => item.count || 0), // Attendance count
+                        backgroundColor: submissionArray.map(item => item.status === 'Present' ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 99, 132, 0.6)'),
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadTotalStudentsByClass() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/teachers/dashboard/total-students', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch total students by class:', response.statusText);
+                alert("Failed to load total students by class.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log('Total Students by Class Data:', data); // Debugging log
+
+            // Check if the data structure is correct
+            if (!Array.isArray(data.data) || !Array.isArray(data.data[0])) {
+                console.error('Expected data.data[0] to be an array:', data);
+                alert("No total students data available.");
+                return;
+            }
+
+            const studentsArray = data.data[0]; // Access the first sub-array
+            const ctx = document.getElementById('totalStudentsByClassChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: studentsArray.map(item => item.class_name || 'Unknown Class'), // Use class name for labeling
+                    datasets: [{
+                        label: 'Total Students',
+                        data: studentsArray.map(item => item.total_students || 0), // Default to 0 if undefined
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadAssignmentsCompletionStats() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/teachers/dashboard/assignments-completion', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch assignments completion stats:', response.statusText);
+                alert("Failed to load assignments completion stats.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log('Assignments Completion Stats Data:', data); // Debugging log
+
+            if (!Array.isArray(data.data)) {
+                console.error('Expected data.data to be an array:', data);
+                alert("Failed to load assignments completion stats.");
+                return;
+            }
+
+            const ctx = document.getElementById('assignmentsCompletionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.data.map(item => `Class ${item.class_id}`),
+                    datasets: [{
+                        label: 'Completed Assignments',
+                        data: data.data.map(item => item.completed_assignments || 0), // Ensure count is numeric
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    }, {
+                        label: 'Total Assignments',
+                        data: data.data.map(item => item.total_assignments || 0), // Ensure count is numeric
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadOverallAttendanceStats() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/teachers/dashboard/overall-attendance', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch overall attendance stats:', response.statusText);
+                alert("Failed to load overall attendance stats.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log('Overall Attendance Stats Data:', data); // Debugging log
+
+            if (!Array.isArray(data.data) || !Array.isArray(data.data[0])) {
+                console.error('Expected data.data[0] to be an array:', data);
+                alert("No attendance data available.");
+                return;
+            }
+
+            const attendanceArray = data.data[0]; // Access the relevant data array
+            const ctx = document.getElementById('overallAttendanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: attendanceArray.map(item => item.class_name || 'Unknown Class'),
+                    datasets: [{
+                        label: 'Total Attendance',
+                        data: attendanceArray.map(item => item.total_attendance || 0), // Ensure count is numeric
+                        backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                    }, {
+                        label: 'Total Present',
+                        data: attendanceArray.map(item => parseInt(item.total_present) || 0), // Convert string to number; default to 0
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadRecentSubmissionRates() {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:9000/api/teachers/dashboard/recent-submission-rates', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Failed to fetch recent submission rates:', response.statusText);
+                alert("Failed to load recent submission rates.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log('Recent Submission Rates Data:', data); // Debugging log
+
+            if (!Array.isArray(data.data) || !Array.isArray(data.data[0])) {
+                console.error('Expected data.data[0] to be an array:', data);
+                alert("Failed to load recent submission rates.");
+                return;
+            }
+
+            const submissionArray = data.data[0]; // Access the relevant data array
+
+            const ctx = document.getElementById('recentSubmissionRatesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: submissionArray.map(item => `Assignment ${item.assignment_id}`),
+                    datasets: [{
+                        label: 'Submission Rate (%)',
+                        data: submissionArray.map(item => parseFloat(item.submission_rate) || 0), // Convert to float and default to 0
+                        fill: false,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Submission Rate (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Assignments'
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+

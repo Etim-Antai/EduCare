@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Assignment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+
+        header {
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px;
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #message {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #34495e;
+            color: white;
+        }
+
+        .back-link {
+            display: block;
+            margin: 20px 0;
+            padding: 10px;
+            text-align: center;
+            color: white;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .back-link:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Submit Assignment</h1>
+    </header>
+
+    <div class="container">
+        <h2>Assignment Submission Form</h2>
+        <a href="studentdashboard.html" class="back-link">Return to Dashboard</a>
+        <form id="submissionForm">
+            <div class="form-group">
+                <label for="assignment_id">Assignment:</label>
+                <select id="assignment_id" name="assignment_id" required>
+                    <option value="">Select Assignment</option><!-- Default placeholder -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="content">Content:</label>
+                <textarea id="content" name="content" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="studentAnswers">Student Answers (JSON format):</label>
+                <textarea id="studentAnswers" name="studentAnswers" rows="4" required></textarea>
+                <small>Example: {"question_id1": "your_answer", "question_id2": "your_answer"}</small>
+            </div>
+            <button type="submit">Submit Assignment</button>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 All Rights Reserved.</p>
+        <p>Contact Us: support@student-dashboard.com | Phone: (123) 456-7890</p>
+    </footer>
+
+    <script>
+        // Load assignments into dropdown on page load
+        window.onload = async function() {
+            await loadAssignments(); // Fetch assignments
+        };
+
+        async function loadAssignments() {
+            const token = localStorage.getItem('token'); // Get the authentication token
+            try {
+                const response = await fetch('http://localhost:9000/api/assignments', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch assignments');
+                }
+
+                const assignments = await response.json();
+                const assignmentDropdown = document.getElementById('assignment_id');
+
+                assignments.forEach(assignment => {
+                    const option = document.createElement('option');
+                    option.value = assignment.assignment_id; // Use the assignment_id for the value
+                    option.textContent = `${assignment.title} (Due: ${new Date(assignment.due_date).toLocaleDateString()})`; // Title and due date displayed
+                    assignmentDropdown.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading assignments:', error);
+                alert("Failed to load assignments. Please try again later.");
+            }
+        }
+
+        document.getElementById('submissionForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const assignment_id = document.getElementById('assignment_id').value;
+            const content = document.getElementById('content').value;
+            let studentAnswers;
+
+            // Validate student answers input format
+            try {
+                studentAnswers = JSON.parse(document.getElementById('studentAnswers').value); // Parse JSON input
+                if (typeof studentAnswers !== 'object') {
+                    throw new Error('studentAnswers must be a valid JSON object');
+                }
+            } catch (error) {
+                document.getElementById('message').innerText = 'Invalid JSON format for student answers.';
+                return; // Exit function if invalid JSON
+            }
+
+            const token = localStorage.getItem('token'); // Get the token from local storage
+
+            try {
+                const response = await fetch(`http://localhost:9000/api/submissions/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ assignment_id, content, studentAnswers })
+                });
+
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(responseData.error || 'Submission failed');
+                }
+
+                // Display success message
+                document.getElementById('message').innerText = responseData.message;
+            } catch (error) {
+                console.error('Error submitting assignment:', error);
+                document.getElementById('message').innerText = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

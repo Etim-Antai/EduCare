@@ -19,45 +19,57 @@ exports.createNotification = async (req, res) => {
         res.status(201).json({ message: 'Notification created successfully!', notification_id: newNotificationId });
     } catch (error) {
         console.error('Error creating notification:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An error occurred while creating the notification.' });
     }
 };
 
 // Notify teacher when a class is created
 exports.notifyTeacherOnClassCreation = async (teacherId, className) => {
     const message = `A new class "${className}" has been created.`;
-    const event_type = 'class_creation';
-    await TeacherNotification.create({
-        teacher_id: teacherId,
-        message,
-        event_type,
-        read_status: 0
-    }).catch(error => console.error('Error notifying teacher:', error));
+    const event_type = 'Class Creation';
+    try {
+        await TeacherNotification.create({
+            teacher_id: teacherId,
+            message,
+            event_type,
+            read_status: 0
+        });
+    } catch (error) {
+        console.error('Error notifying teacher about class creation:', error);
+    }
 };
 
 // Notify teacher when a timetable is created
 exports.notifyTeacherOnTimetableCreation = async (teacherId, timetableName) => {
     const message = `A new timetable "${timetableName}" has been created.`;
-    const event_type = 'timetable_creation';
-    await TeacherNotification.create({
-        teacher_id: teacherId,
-        message,
-        event_type,
-        read_status: 0
-    }).catch(error => console.error('Error notifying teacher:', error));
+    const event_type = 'Timetable Creation';
+    try {
+        await TeacherNotification.create({
+            teacher_id: teacherId,
+            message,
+            event_type,
+            read_status: 0
+        });
+    } catch (error) {
+        console.error('Error notifying teacher about timetable creation:', error);
+    }
 };
 
 // Notify students on submission
 exports.notifyStudentsOnSubmission = async (studentIds, assignmentTitle) => {
     for (const studentId of studentIds) {
         const message = `Your submission for "${assignmentTitle}" has been received.`;
-        const event_type = 'submission_received';
-        await TeacherNotification.create({
-            teacher_id: studentId, // Assuming this is replaced by student_id for notifications
-            message,
-            event_type,
-            read_status: 0
-        }).catch(error => console.error('Error notifying student:', error));
+        const event_type = 'Submission Received';
+        try {
+            await TeacherNotification.create({
+                teacher_id: studentId, // Assuming teacher_id is not supposed to be used here
+                message,
+                event_type,
+                read_status: 0
+            });
+        } catch (error) {
+            console.error('Error notifying student about submission:', error);
+        }
     }
 };
 
@@ -70,7 +82,7 @@ exports.getNotifications = async (req, res) => {
         res.status(200).json({ success: true, notifications });
     } catch (error) {
         console.error('Error fetching notifications:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An error occurred while fetching notifications.' });
     }
 };
 
@@ -83,7 +95,7 @@ exports.markNotificationAsRead = async (req, res) => {
         res.status(200).json({ message: 'Notification marked as read.' });
     } catch (error) {
         console.error('Error marking notification as read:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An error occurred while marking the notification as read.' });
     }
 };
 
@@ -94,6 +106,6 @@ exports.getAllNotifications = async (req, res) => {
         res.status(200).json({ success: true, notifications });
     } catch (error) {
         console.error('Error fetching all notifications:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'An error occurred while fetching all notifications.' });
     }
 };

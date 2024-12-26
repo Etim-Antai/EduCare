@@ -11,58 +11,51 @@
             padding: 0;
             background-color: #f4f4f4;
         }
-
         .header {
             background-color: #007bff;
             color: white;
             padding: 10px 20px;
             text-align: center;
         }
-
         .container {
             padding: 20px;
+            max-width: 800px;
+            margin: auto;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 10px 0;
         }
-
         table th, table td {
             border: 1px solid #ccc;
             padding: 10px;
             text-align: left;
         }
-
         table th {
             background-color: #f4f4f4;
         }
-
         .back-to-dashboard {
             display: inline-block;
             margin-top: 20px;
             padding: 10px 15px;
-            background-color: #007bff; /* Same color as header */
+            background-color: #007bff; 
             color: white;
             text-decoration: none;
             border-radius: 5px;
             float: right;
         }
-
         .back-to-dashboard:hover {
-            background-color: #0056b3; /* Darker shade for hover effect */
+            background-color: #0056b3; 
         }
-
         #loading {
-            display: none; /* Hidden by default */
+            display: none; 
             margin-top: 10px;
             font-weight: bold;
             color: #007bff;
         }
-
         #message {
-            color: red; /* For error messages */
+            color: red; 
             font-weight: bold;
             margin-top: 10px;
         }
@@ -74,8 +67,8 @@
     </div>
 
     <div class="container">
-        <div id="loading">Loading classes...</div> <!-- Loading indicator -->
-        <div id="message"></div> <!-- Error message display -->
+        <div id="loading">Loading classes...</div>
+        <div id="message"></div>
         <table id="classList">
             <thead>
                 <tr>
@@ -91,27 +84,29 @@
             </tbody>
         </table>
 
-        <a href="admindashboard.html" class="back-to-dashboard">Back to Dashboard</a> <!-- Link back to admin dashboard -->
+        <a href="admindashboard.html" class="back-to-dashboard">Back to Dashboard</a>
     </div>
 
     <script>
-        // Check if the token exists; if not redirect to the login page
+        // Check if the token exists; if not, redirect to the login page
         function checkLogin() {
-            const token = sessionStorage.getItem('token'); // Use sessionStorage for consistency
+            const token = localStorage.getItem('token'); // Get token from localStorage
+            console.log('Current token on view classes page:', token);
             if (!token) {
+                console.log("No token found, redirecting to login.");
                 window.location.href = 'adminLogin.html'; // Redirect if not logged in
             }
         }
 
         // Fetch class list from the API
         async function fetchClasses() {
-            const token = sessionStorage.getItem('token'); // Retrieve JWT token from session storage
+            const token = localStorage.getItem('token'); // Get the token from localStorage
 
             document.getElementById('loading').style.display = 'block';  // Show loading message
             document.getElementById('message').textContent = ''; // Clear previous messages
 
             try {
-                const response = await fetch('http://localhost:9000/api/admin/classes', {
+                const response = await fetch('http://localhost:9000/api/classes', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -119,12 +114,19 @@
                     }
                 });
 
+                // Check for unauthorized response
                 if (response.status === 401) {
-                    throw new Error('Unauthorized access. Please log in again.');
+                    alert("Session expired, please log in again.");
+                    localStorage.removeItem('token'); // Clear the invalid token
+                    window.location.href = 'adminLogin.html'; // Redirect to login
+                    return;
                 }
+
+                // Handle possible errors
                 if (!response.ok) {
                     throw new Error(`Error: ${response.status} - ${response.statusText}`);
                 }
+
                 const data = await response.json();
                 const classTable = document.getElementById('classList').getElementsByTagName('tbody')[0];
                 classTable.innerHTML = ''; // Clear existing data
@@ -152,8 +154,8 @@
 
         // Call functions on page load
         window.onload = function() {
-            checkLogin(); // Check if logged in
-            fetchClasses(); // Load classes when the page is ready
+            checkLogin(); 
+            fetchClasses(); 
         };
     </script>
 </body>

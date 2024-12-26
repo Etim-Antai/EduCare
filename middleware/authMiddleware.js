@@ -1,12 +1,10 @@
-
-
 const jwt = require('jsonwebtoken');
 
 // Middleware for protecting routes based on user roles
 exports.protect = (allowedRoles = []) => (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1]; // Bearer <token>
+    const token = req.headers.authorization?.split(' ')[1]; // Get the token from Bearer
 
-    // Check if token is provided
+    // Check if the token is provided
     if (!token) {
         return res.status(401).json({ message: 'Not authorized, token is missing or malformed' });
     }
@@ -14,7 +12,7 @@ exports.protect = (allowedRoles = []) => (req, res, next) => {
     try {
         // Verify token and attach decoded user to request
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
+        req.user = decoded; // Attach user data to the request for future use
 
         // Check if the user's role is allowed
         if (allowedRoles.length && !allowedRoles.includes(req.user.role)) {
@@ -33,6 +31,7 @@ exports.protect = (allowedRoles = []) => (req, res, next) => {
 
 // Generalized role-checking middleware
 exports.checkRole = (...allowedRoles) => (req, res, next) => {
+    // Ensure user data is available from token
     if (!req.user) {
         return res.status(403).json({ message: 'Access denied: No user information available' });
     }

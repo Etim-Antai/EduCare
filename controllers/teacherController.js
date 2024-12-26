@@ -12,8 +12,6 @@ async function getStudentsByClassId(classId) {
 
 // Add a New Teacher
 exports.addTeacher = async (req, res) => {
-    // Add teacher validation logic here (using Joi or other method)
-    // Example validation omitted for brevity
     try {
         const teacherId = await teacherModel.addTeacher(req.body);
         res.status(201).json({ message: 'Teacher added successfully', teacherId });
@@ -186,6 +184,193 @@ exports.getTeacherProfile = async (req, res) => {
         res.status(200).json({ data: teacher });
     } catch (error) {
         console.error('Error fetching teacher profile:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Fetch teacher statistics for the dashboard
+exports.getTeacherDashboardStats = async (req, res) => {
+    const teacherId = req.user.id; // Get the authenticated teacher's ID
+
+    try {
+        // Fetching counts of all students related to the classes taught by this teacher
+        const [totalStudents] = await db.query(
+            'SELECT COUNT(student_id) AS total_students FROM students WHERE class_id IN (SELECT class_id FROM classes WHERE teacher_id = ?)', 
+            [teacherId]
+        );
+
+        // Fetching counts of all classes available in the school
+        const [totalClasses] = await db.query(
+            'SELECT COUNT(class_id) AS total_classes FROM classes'
+        );
+
+        // Fetching counts of all assignments available in the school
+        const [totalAssignments] = await db.query(
+            'SELECT COUNT(assignment_id) AS total_assignments FROM assignments'
+        );
+
+        res.status(200).json({
+            totalStudents: totalStudents[0].total_students,
+            totalClasses: totalClasses[0].total_classes,
+            totalAssignments: totalAssignments[0].total_assignments,
+        });
+    } catch (error) {
+        console.error('Error fetching teacher dashboard statistics:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Fetch average grades per class for the dashboard
+exports.getAvgGradesByClass = async (req, res) => {
+    const teacherId = req.user.id;
+
+    try {
+        const result = await db.query(`
+            SELECT c.class_id, c.class_name, AVG(g.score) AS avg_grade 
+            FROM classes c 
+            LEFT JOIN grades g ON c.class_id = g.class_id 
+            WHERE c.teacher_id = ? 
+            GROUP BY c.class_id
+        `, [teacherId]);
+
+        res.status(200).json({ data: result });
+    } catch (error) {
+        console.error('Error fetching average grades by class:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Fetch attendance records for the dashboard
+exports.getAttendanceStats = async (req, res) => {
+    const teacherId = req.user.id;
+
+    try {
+        const attendanceStats = await db.query(`
+            SELECT c.class_id, c.class_name, a.status, COUNT(*) AS count 
+            FROM attendance a 
+            JOIN classes c ON a.class_id = c.class_id 
+            WHERE c.teacher_id = ?
+            GROUP BY a.class_id, a.status
+        `, [teacherId]);
+
+        res.status(200).json({ data: attendanceStats });
+    } catch (error) {
+        console.error('Error fetching attendance statistics:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Fetch assignment submission rates
+exports.getAssignmentSubmissionRates = async (req, res) => {
+    const teacherId = req.user.id;
+
+    try {
+        const submissionRates = await db.query(`
+            SELECT a.assignment_id, 
+                   a.title,
+                   COUNT(s.submission_id) AS submission_count, 
+                   COUNT(s.submission_id) / COUNT(DISTINCT st.student_id) * 100 AS submission_rate 
+            FROM assignments a 
+            LEFT JOIN submissions s ON a.assignment_id = s.assignment_id 
+            LEFT JOIN students st ON st.class_id IN (SELECT class_id FROM classes WHERE teacher_id = ?) 
+            WHERE a.class_id IN (SELECT class_id FROM classes WHERE teacher_id = ?)
+            GROUP BY a.assignment_id
+        `, [teacherId, teacherId]);
+
+        res.status(200).json({ data: submissionRates });
+    } catch (error) {
+        console.error('Error fetching assignment submission rates:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Fetch total students by class
+exports.getTotalStudentsByClass = async (req, res) => {
+    const teacherId = req.user.id;
+
+    try {
+        const result = await db.query(`
+            SELECT c.class_id, c.class_name, COUNT(s.student_id) AS total_students 
+            FROM classes c 
+            LEFT JOIN students s ON s.class_id = c.class_id 
+            WHERE c.teacher_id = ?
+            GROUP BY c.class_id
+        `, [teacherId]);
+
+        res.status(200).json({ data: result });
+    } catch (error) {
+        console.error('Error fetching total students by class:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Fetch assignments completion statistics
+exports.getAssignmentsCompletionStats = async (req, res) => {
+    const teacherId = req.user.id;
+
+    try {
+        const result = await db.query(`
+            SELECT a.class_id, 
+                   SUM(CASE WHEN s.graded = 1 THEN 1 ELSE 0 END) AS completed_assignments,
+                   COUNT(a.assignment_id) AS total_assignments 
+            FROM assignments a 
+            LEFT JOIN submissions s ON a.assignment_id = s.assignment_id 
+            WHERE a.class_id IN (SELECT class_id FROM classes WHERE teacher_id = ?)
+            GROUP BY a.class_id
+        `, [teacherId]);
+
+        res.status(200).json({ data: result });
+    } catch (error) {
+        console.error('Error fetching assignment completion statistics:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Fetch overall attendance statistics by class
+exports.getOverallAttendanceStats = async (req, res) => {
+    const teacherId = req.user.id;
+
+    try {
+        const result = await db.query(`
+            SELECT 
+                c.class_id, 
+                c.class_name,
+                COUNT(a.attendance_id) AS total_attendance,
+                SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS total_present
+            FROM classes c 
+            LEFT JOIN attendance a ON a.class_id = c.class_id 
+            WHERE c.teacher_id = ?
+            GROUP BY c.class_id
+        `, [teacherId]);
+
+        res.status(200).json({ data: result });
+    } catch (error) {
+        console.error('Error fetching overall attendance statistics:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Fetch recent submission rates over the last 30 days
+exports.getRecentSubmissionRates = async (req, res) => {
+    const teacherId = req.user.id;
+
+    try {
+        const result = await db.query(`
+            SELECT 
+                a.assignment_id,
+                a.title,
+                COUNT(s.submission_id) AS submission_count,
+                COUNT(s.submission_id) / COUNT(DISTINCT st.student_id) * 100 AS submission_rate 
+            FROM assignments a 
+            LEFT JOIN submissions s ON a.assignment_id = s.assignment_id 
+            LEFT JOIN students st ON st.class_id IN (SELECT class_id FROM classes WHERE teacher_id = ?) 
+            WHERE a.created_at >= NOW() - INTERVAL 30 DAY
+            GROUP BY a.assignment_id
+        `, [teacherId]);
+
+        res.status(200).json({ data: result });
+    } catch (error) {
+        console.error('Error fetching recent submission rates:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };

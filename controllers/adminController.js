@@ -1,14 +1,16 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken'); // Import JWT for handling tokens
+const jwt = require('jsonwebtoken');  // Import JWT for handling tokens
+const TeacherNotificationUtils = require('../utils/teacherNotificationUtils'); // Ensure this path is correct
 
+// Admin Dashboard Stats
 const stats = async (req, res) => {
     try {
         const [admins] = await db.query('SELECT COUNT(*) AS adminCount FROM admins');
         const [classes] = await db.query('SELECT COUNT(*) AS classCount FROM Classes');
         const [timetables] = await db.query('SELECT COUNT(*) AS timetableCount FROM Timetable');
-        const [teachers] = await db.query('SELECT COUNT(*) AS teacherCount FROM teachers'); // Query for teachers
-        const [students] = await db.query('SELECT COUNT(*) AS studentCount FROM students'); // Query for students
+        const [teachers] = await db.query('SELECT COUNT(*) AS teacherCount FROM teachers');
+        const [students] = await db.query('SELECT COUNT(*) AS studentCount FROM students');
 
         res.status(200).json({
             message: 'Admin Dashboard Data',
@@ -16,8 +18,8 @@ const stats = async (req, res) => {
                 adminCount: admins[0].adminCount,
                 classCount: classes[0].classCount,
                 timetableCount: timetables[0].timetableCount,
-                teacherCount: teachers[0].teacherCount, // Include teacher count
-                studentCount: students[0].studentCount  // Include student count
+                teacherCount: teachers[0].teacherCount,
+                studentCount: students[0].studentCount
             }
         });
     } catch (error) {
@@ -25,9 +27,6 @@ const stats = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
-
-
-// Queries for Charts
 
 // Teacher Distribution by Subject
 const getTeacherDistribution = async (req, res) => {
@@ -68,8 +67,8 @@ const getAssignmentSubmissionsPerClass = async (req, res) => {
         const [results] = await db.query(`
             SELECT c.class_name, COUNT(s.submission_id) AS submission_count
             FROM submissions s
-            JOIN assignments a ON s.assignment_id = a.assignment_id  -- Join on assignments
-            JOIN classes c ON a.class_id = c.class_id                -- Join on classes
+            JOIN assignments a ON s.assignment_id = a.assignment_id  
+            JOIN classes c ON a.class_id = c.class_id                
             GROUP BY c.class_name;
         `);
         res.status(200).json({ message: 'Assignment submissions per class retrieved successfully', data: results });
@@ -117,7 +116,6 @@ const getNotificationsSummary = async (req, res) => {
 const addAdmin = async (req, res) => {
     const { username, email, password, role, first_name, last_name, phone } = req.body;
 
-    // Validate input
     if (!username || !email || !password || !role || !first_name || !last_name) {
         return res.status(400).json({ message: 'Missing required fields: username, email, password, role, first_name, last_name' });
     }
@@ -128,10 +126,8 @@ const addAdmin = async (req, res) => {
             return res.status(400).json({ message: 'Email or username is already registered' });
         }
 
-        // Hash the password before saving
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert new admin into the database
         const [result] = await db.query(
             'INSERT INTO admins (username, email, password, role, first_name, last_name, phone) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [username, email, hashedPassword, role, first_name, last_name, phone]
@@ -149,7 +145,7 @@ const getAdminProfile = async (req, res) => {
     const token = req.headers.authorization.split(' ')[1]; // Extract token from headers
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET); // Use your actual JWT secret
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const adminId = decoded.id; // Ensure to fetch the correct field that holds the admin ID
 
         const [admin] = await db.query('SELECT * FROM admins WHERE admin_id = ?', [adminId]);
@@ -166,17 +162,16 @@ const getAdminProfile = async (req, res) => {
 
 // Update Admin
 const updateAdmin = async (req, res) => {
-    const token = req.headers.authorization.split(' ')[1]; // Extract token from headers
+    const token = req.headers.authorization.split(' ')[1];
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET); // Use your actual JWT secret
-        const adminId = decoded.id; // Admin ID extracted from the token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const adminId = decoded.id;
 
         const { username, first_name, last_name, phone } = req.body;
         const updates = [];
         const values = [];
 
-        // Check for each field and add to the update query if it exists
         if (username) {
             updates.push('username = ?');
             values.push(username);
@@ -200,7 +195,6 @@ const updateAdmin = async (req, res) => {
 
         values.push(adminId);
         const updateQuery = `UPDATE admins SET ${updates.join(', ')} WHERE admin_id = ?`;
-        console.log("Executing Update Query:", updateQuery, values); // Log the query and values
 
         const [result] = await db.query(updateQuery, values);
         if (result.affectedRows === 0) {
@@ -228,7 +222,6 @@ const getAdmins = async (req, res) => {
 const deleteAdmin = async (req, res) => {
     const adminId = req.params.id;
 
-    // Validate input
     if (!adminId) {
         return res.status(400).json({ message: 'Admin ID is required' });
     }
@@ -246,7 +239,6 @@ const deleteAdmin = async (req, res) => {
 const addClass = async (req, res) => {
     const { className, teacherId, startDate, endDate } = req.body;
 
-    // Validate input
     if (!className || !teacherId || !startDate || !endDate) {
         return res.status(400).json({ message: 'Missing required fields: className, teacherId, startDate, endDate' });
     }
@@ -256,11 +248,28 @@ const addClass = async (req, res) => {
             'INSERT INTO Classes (class_name, teacher_id, start_date, end_date) VALUES (?, ?, ?, ?)',
             [className, teacherId, startDate, endDate]
         );
+
+        const teacherDetails = await getTeacherDetails(teacherId);
+        if (teacherDetails) {
+            const message = `A new class "${className}" has been created.`;
+            await TeacherNotificationUtils.createNotification({
+                teacher_id: teacherId,
+                message,
+                event_type: 'Class Creation'
+            });
+        }
+
         res.status(201).json({ message: 'Class added successfully', classId: result.insertId });
     } catch (error) {
         console.error('Error adding class:', error);
         res.status(500).json({ message: 'Server error' });
     }
+};
+
+// Function to get teacher details
+const getTeacherDetails = async (teacherId) => {
+    const [teacher] = await db.query('SELECT first_name, last_name FROM teachers WHERE teacher_id = ?', [teacherId]);
+    return teacher.length > 0 ? teacher[0] : null;
 };
 
 // View Classes
@@ -279,7 +288,6 @@ const updateClass = async (req, res) => {
     const classId = req.params.id;
     const { className, teacherId, startDate, endDate } = req.body;
 
-    // Validate input
     if (!className && !teacherId && !startDate && !endDate) {
         return res.status(400).json({ message: 'No valid fields to update' });
     }
@@ -300,7 +308,6 @@ const updateClass = async (req, res) => {
 const deleteClass = async (req, res) => {
     const classId = req.params.id;
 
-    // Validate input
     if (!classId) {
         return res.status(400).json({ message: 'Class ID is required' });
     }
@@ -503,7 +510,7 @@ const loginStudent = async (req, res) => {
     }
 };
 
-// get all teachers
+// Get all teachers
 const getTeachers = async (req, res) => {
     try {
         const [teachers] = await db.query('SELECT * FROM teachers');
@@ -514,7 +521,7 @@ const getTeachers = async (req, res) => {
     }
 };
 
-// add teachers
+// Add teacher
 const addTeacher = async (req, res) => {
     const { first_name, last_name, email, password, subject, phone, hire_date } = req.body;
 
@@ -531,7 +538,7 @@ const addTeacher = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const [result] = await db.query(
-            'INSERT INTO teachers (first_name, last_name, email, password, subject, phone, hire_date) VALUES (?, ?)',
+            'INSERT INTO teachers (first_name, last_name, email, password, subject, phone, hire_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [first_name, last_name, email, hashedPassword, subject, phone, hire_date]
         );
 
@@ -539,15 +546,14 @@ const addTeacher = async (req, res) => {
     } catch (error) {    
         console.error('Error adding teacher:', error);
         res.status(500).json({ message: 'Server error' });
-    };
+    }
 };
 
-
-
-// update teacher
+// Update teacher
 const updateTeacher = async (req, res) => {
     const teacherId = req.params.id;
     const { first_name, last_name, email, password, subject, phone, hire_date } = req.body;
+
     if (!first_name || !last_name || !email || !password || !subject || !phone || !hire_date) {
         return res.status(400).json({ message: 'All fields are required' });
     }
@@ -557,11 +563,14 @@ const updateTeacher = async (req, res) => {
         if (existingTeacher.length > 0 && existingTeacher[0].teacher_id !== parseInt(teacherId)) {
             return res.status(400).json({ message: 'Email is already registered' });
         }
+        
         const hashedPassword = await bcrypt.hash(password, 10);
+
         await db.query(
             'UPDATE teachers SET first_name = ?, last_name = ?, email = ?, password = ?, subject = ?, phone = ?, hire_date = ? WHERE teacher_id = ?',
             [first_name, last_name, email, hashedPassword, subject, phone, hire_date, teacherId]
         );
+
         res.status(200).json({ message: 'Teacher updated successfully' });
     } catch (error) {
         console.error('Error updating teacher:', error);
@@ -569,7 +578,7 @@ const updateTeacher = async (req, res) => {
     }
 };
 
-// delete teacher
+// Delete a Teacher
 const deleteTeacher = async (req, res) => {
     const teacherId = req.params.id;
 
@@ -584,14 +593,14 @@ const deleteTeacher = async (req, res) => {
         console.error('Error deleting teacher:', error);
         res.status(500).json({ message: 'Server error' });
     }
-    };
+};
 
-// get class materials
+// Get Class Materials
 const getClassMaterials = async (req, res) => {
     const { class_id } = req.params;
     if (!class_id || isNaN(class_id)) {
         return res.status(400).json({ message: 'Invalid class ID' });
-        }
+    }
     try {
         const [results] = await db.query('SELECT * FROM materials WHERE class_id = ?', [class_id]);
         const materials = results;
@@ -605,7 +614,7 @@ const getClassMaterials = async (req, res) => {
     }
 };
 
-// add class materials
+// Add Class Materials
 const addClassMaterials = async (req, res) => {
     const { class_id, title, description, file_url } = req.body;
     if (!class_id || isNaN(class_id) || !title || !description || !file_url) {
@@ -617,13 +626,13 @@ const addClassMaterials = async (req, res) => {
             [class_id, title, description, file_url]
         );
         res.status(201).json({ message: 'Material added successfully', materialId: result.insertId });
-            } catch (error) {
-                console.error('Error adding material:', error);
+    } catch (error) {
+        console.error('Error adding material:', error);
         res.status(500).json({ message: 'Server error' });
-        }
-    };
+    }
+};
 
-// get timetable
+// Get Timetable
 const getTimetable = async (req, res) => {
     const { class_id } = req.params;
     if (!class_id || isNaN(class_id)) {
@@ -642,17 +651,30 @@ const getTimetable = async (req, res) => {
     }
 };
 
-// add timetable
+// Add Timetable
 const addTimetable = async (req, res) => {
     const { class_id, subject, teacher_id, day, start_time, end_time } = req.body;
+
     if (!class_id || isNaN(class_id) || !subject || !teacher_id || !day || !start_time || !end_time) {
         return res.status(400).json({ message: 'All fields are required' });
     }
+
     try {
         const [result] = await db.query(
-            'INSERT INTO timetable (class_id, subject, teacher_id, day, start_time, end_time) VALUES (?, ?)',
+            'INSERT INTO timetable (class_id, subject, teacher_id, day, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?)',
             [class_id, subject, teacher_id, day, start_time, end_time]
         );
+
+        const teacherDetails = await getTeacherDetails(teacher_id);
+        if (teacherDetails) {
+            const message = `A new timetable has been created for "${subject}".`;
+            await TeacherNotificationUtils.createNotification({
+                teacher_id: teacher_id,
+                message,
+                event_type: 'Timetable Creation'
+            });
+        }
+
         res.status(201).json({ message: 'Timetable added successfully', timetableId: result.insertId });
     } catch (error) {
         console.error('Error adding timetable:', error);
@@ -660,24 +682,7 @@ const addTimetable = async (req, res) => {
     }
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Get Grades Distribution
 const getGradesDistribution = async (req, res) => {
     try {
         const [results] = await db.query(`
@@ -696,13 +701,13 @@ const getGradesDistribution = async (req, res) => {
     }
 };
 
-
+// Get Attendance Trends
 const getAttendanceTrends = async (req, res) => {
     try {
         const [results] = await db.query(`
             SELECT 
                 MONTH(date) AS month,
-                YEAR(date) AS year,  -- Include the year for clearer trend analysis
+                YEAR(date) AS year,
                 (SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) / COUNT(*)) * 100 AS average_attendance
             FROM attendance
             GROUP BY YEAR(date), MONTH(date)
@@ -719,9 +724,7 @@ const getAttendanceTrends = async (req, res) => {
     }
 };
 
-
-
-
+// Get Assignment Submission Rates
 const getAssignmentSubmissionRates = async (req, res) => {
     try {
         const [results] = await db.query(`
@@ -742,20 +745,6 @@ const getAssignmentSubmissionRates = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Export all the required functions
 module.exports = {

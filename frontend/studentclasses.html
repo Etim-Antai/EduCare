@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classes List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+        header {
+            background-color: #5a67d8;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .back-link {
+            margin-bottom: 20px;
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #48bb78;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .back-link:hover {
+            background-color: #38a169;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #ebf8ff;
+        }
+        td {
+            background-color: #f7fafc;
+        }
+        tr:hover {
+            background-color: #f0f5ff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Classes List</h1>
+    </header>
+    <div class="container">
+        <a href="studentdashboard.html" class="back-link">Return to Dashboard</a>
+        <table id="classesTable">
+            <thead>
+                <tr>
+                    <th>Class ID</th>
+                    <th>Class Name</th>
+                    <th>Teacher ID</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Time of Day</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Class rows will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Function to fetch class data and display it
+        async function fetchClasses() {
+            try {
+                const response = await fetch('http://localhost:9000/api/classes', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                displayClasses(data.data);
+            } catch (error) {
+                console.error('Error fetching classes:', error);
+            }
+        }
+
+        function displayClasses(classes) {
+            const tableBody = document.getElementById('classesTable').querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear any existing rows
+
+            classes.forEach(cls => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${cls.class_id}</td>
+                    <td>${cls.class_name}</td>
+                    <td>${cls.teacher_id}</td>
+                    <td>${new Date(cls.start_date).toLocaleDateString()}</td>
+                    <td>${new Date(cls.end_date).toLocaleDateString()}</td>
+                    <td>${cls.time_of_day || 'N/A'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Fetch classes when the page is loaded
+        window.onload = fetchClasses;
+    </script>
+</body>
+</html>

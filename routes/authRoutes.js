@@ -36,7 +36,10 @@ router.route('/admin/students/:student_id')
 
 // Teacher and Student Login Routes
 router.post('/teacher/login', authController.loginTeacher); // Login as teacher
-router.post('/student/login', authController.loginStudent); // Login as student
+router.post('/student/login', authController.loginStudent); // Login as student//
+// getAllClasses
+
+router.get('/classes', authController.getAllClasses); // Retrieves all classes
 
 module.exports = router;
 

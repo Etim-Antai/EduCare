@@ -68,7 +68,7 @@ app.use('/api/questions', questionRoutes); // Question bank routes
 app.use('/api/admin-notifications', adminNotificationRoutes); // Admin notification routes
 app.use('/api/class-materials', classMaterialRoutes); // Class material routes
 app.use('/api/classes', classRoutes); // Class routes
-app.use('/api/teacher-notifications', teacherNotificationRoutes);
+app.use('/api/teachernotifications', teacherNotificationRoutes);
 
 
 // Endpoint for marking notifications as read
@@ -116,7 +116,7 @@ app.get('/Home', (req, res) => {
         { path: '/api/admin-notifications', description: 'Routes for admin notifications' },
         { path: '/api/class-materials', description: 'Routes for class materials' },
         { path: '/api/classes', description: 'Routes for class management' },
-        { path: '/api/teacher-notifications', description: 'Routes for teacher notifications' },
+        { path: '/api/teachernotifications', description: 'Routes for teacher notifications' },
     ];
 
     res.render('index', { endpoints });

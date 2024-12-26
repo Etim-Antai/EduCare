@@ -4,7 +4,7 @@ const db = require('../config/db'); // Database connection setup
 class NotificationModel {
     // Create a new notification
     async createNotification(notificationData) {
-        const { student_id, title, message, material_id, assignment_id } = notificationData; // Include assignment_id if needed
+        const { student_id, title, message, material_id, assignment_id } = notificationData;
 
         try {
             const [result] = await db.query(
@@ -12,23 +12,37 @@ class NotificationModel {
                  VALUES (?, ?, ?, ?, ?)`,
                 [student_id, title, message, material_id, assignment_id]
             );
-            return result.insertId; // Return the ID of the newly created notification
+            return result.insertId; 
         } catch (error) {
             console.error('Error sending notification:', error);
-            throw error; // Re-throw the error for handling in the controller
+            throw error; 
         }
     }
 
     // Fetch notifications for a student
     async getNotificationsForStudent(studentId) {
+        console.log('Fetching notifications for student ID:', studentId); // Debug log
         try {
             const [rows] = await db.query('SELECT * FROM notifications WHERE student_id = ?', [studentId]);
-            return rows; // Return rows fetched for the student
+            console.log('Fetched rows:', rows); // Log fetched rows
+            return rows; 
         } catch (error) {
             console.error('Error fetching notifications:', error);
-            throw error; // Re-throw the error for handling in the controller
+            throw error; 
+        }
+    }
+
+    // Fetch all notifications
+    async getAllNotifications() {
+        try {
+            const [rows] = await db.query('SELECT * FROM notifications');
+            console.log('Fetched all notifications:', rows); // Log all fetched notifications
+            return rows; 
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            throw error; 
         }
     }
 }
 
-module.exports = new NotificationModel(); // Export a single instance of the NotificationModel class
+module.exports = new NotificationModel();

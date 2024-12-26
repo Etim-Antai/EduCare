@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Notifications</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .notifications-list {
+            margin-top: 20px;
+        }
+
+        .notification {
+            border-bottom: 1px solid #ccc;
+            padding: 15px 0;
+        }
+
+        .notification h3 {
+            margin: 0;
+            font-size: 1.2em;
+            color: #007BFF;
+        }
+
+        .notification p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .notification small {
+            display: block;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 10px 15px;
+            color: #fff;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .back-link:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Notifications</h1>
+
+        <!-- Link to return to Student Dashboard -->
+        <a href="studentdashboard.html" class="back-link">Return to Dashboard</a>
+
+        <div id="notifications" class="notifications-list"></div>
+    </div>
+
+    <script>
+        // Function to fetch notifications
+        async function fetchNotifications() {
+            // Retrieve token from local storage
+            const token = localStorage.getItem('token'); // Use the token stored during login
+            const studentId = 6; // Replace this with the actual student ID you wish to fetch notifications for
+            const notificationsContainer = document.getElementById('notifications');
+
+            if (!token) {
+                notificationsContainer.innerHTML = '<p>Please log in to view notifications.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:9000/api/notifications`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include the token in the request header
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Display notifications
+                if (data.data.length > 0) {
+                    data.data.forEach(notification => {
+                        const notificationElement = document.createElement('div');
+                        notificationElement.className = 'notification';
+                        notificationElement.innerHTML = `
+                            <h3>${notification.title}</h3>
+                            <p>${notification.message}</p>
+                            <small>Received on: ${new Date(notification.notification_date).toLocaleString()}</small>
+                        `;
+                        notificationsContainer.appendChild(notificationElement);
+                    });
+                } else {
+                    notificationsContainer.innerHTML = '<p>No notifications found.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+                notificationsContainer.innerHTML = '<p>There was an error loading notifications.</p>';
+            }
+        }
+
+        // Call the fetchNotifications function when the page is loaded
+        window.onload = fetchNotifications;
+    </script>
+</body>
+</html>

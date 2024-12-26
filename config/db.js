@@ -165,7 +165,8 @@ async function createTables() {
                 submission_date DATETIME DEFAULT CURRENT_TIMESTAMP,
                 score FLOAT NULL,
                 graded TINYINT DEFAULT 0,
-                student_answers JSON NULL
+                student_answers JSON NULL,
+                teacher_id INT
             )
         `);
 

@@ -1,4 +1,4 @@
-const db = require('../config/db'); // Adjust the path to your actual DB config
+const db = require('../config/db');  // Adjust the path to your actual DB config
 
 class TeacherNotification {
     // Create a new notification
@@ -15,7 +15,8 @@ class TeacherNotification {
             );
             return result.insertId; // Return the ID of the new notification
         } catch (error) {
-            throw error; // Handle error appropriately in your application
+            console.error('Error creating notification:', error);
+            throw new Error('An error occurred while creating the notification.');
         }
     }
 
@@ -28,7 +29,8 @@ class TeacherNotification {
             );
             return notifications; // Return the list of notifications
         } catch (error) {
-            throw error; // Handle error appropriately in your application
+            console.error('Error fetching notifications:', error);
+            throw new Error('An error occurred while fetching notifications.');
         }
     }
 
@@ -40,7 +42,8 @@ class TeacherNotification {
             );
             return notifications; // Return the list of all notifications
         } catch (error) {
-            throw error; // Handle error appropriately in your application
+            console.error('Error fetching all notifications:', error);
+            throw new Error('An error occurred while fetching all notifications.');
         }
     }
 
@@ -52,7 +55,8 @@ class TeacherNotification {
                 [notificationId]
             );
         } catch (error) {
-            throw error; // Handle error appropriately in your application
+            console.error('Error marking notification as read:', error);
+            throw new Error('An error occurred while marking the notification as read.');
         }
     }
 
@@ -68,7 +72,8 @@ class TeacherNotification {
             `, [teacherId]);
             return results[0]; // Return the counts
         } catch (error) {
-            throw error; // Handle error appropriately in your application
+            console.error('Error fetching notification counts:', error);
+            throw new Error('An error occurred while fetching notification counts.');
         }
     }
 }

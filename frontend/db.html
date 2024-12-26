@@ -29,14 +29,20 @@
             background-color: #333;
         }
 
-        nav a {
+        nav a, button {
             color: white;
             margin: 0 10px;
             text-decoration: none;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            transition: background-color 0.3s;
         }
 
-        nav a:hover {
-            text-decoration: underline;
+        nav a:hover, button:hover {
+            background-color: #0056b3;
         }
 
         .container {
@@ -47,7 +53,7 @@
         }
 
         .sidebar, .notification-sidebar {
-            width: 130px;
+            width: 160px;
             background-color: #6b8c7b;
             padding: 15px;
             border-radius: 5px;
@@ -79,6 +85,9 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin-left: 10px;
             margin-right: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centering content */
         }
 
         .stats {
@@ -86,6 +95,7 @@
             justify-content: space-between;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            width: 100%; /* Ensures full width */
         }
 
         .stat-item {
@@ -96,7 +106,7 @@
             border-radius: 5px;
             background-color: #e7f3e7;
             margin: 5px;
-            min-width: 150px;
+            min-width: 150px; /* Ensuring minimum width for responsive design */
         }
 
         footer {
@@ -127,32 +137,20 @@
             margin-right: 5px; 
         }
 
-        .stat-count {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stat-count i {
-            color: #6a8b7a;
-        }
-        
-        /* Additional styling for a logout button */
         #logoutButton {
-            color: white;
             background-color: #d9534f; /* Bootstrap danger */
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: auto; /* Aligns the button to the right */
         }
 
-        #logoutButton:hover {
-            background-color: #c9302c; /* Darker shade on hover */
+        /* Responsive chart settings */
+        canvas {
+            width: 100% !important; /* Responsive to container */
+            max-width: 800px; /* Optional max width */
+            height: 400px !important; /* Fixed height for all charts */
+            margin-bottom: 20px; /* Space between charts */
         }
     </style>
 </head>
+
 <body>
     <header>
         <h1>Admin Dashboard</h1>
@@ -166,7 +164,7 @@
         <a href="managestudents.html">Manage Students</a>
         <a href="adminReports.html">Reports</a>
         <a href="notifications.html">Notifications</a>
-        <button id="logoutButton">Logout</button> <!-- Logout Button -->
+        <button id="logoutButton">Logout</button>
     </nav>
 
     <div class="container">
@@ -210,6 +208,7 @@
                     <a class="link" href="viewTimetables.html">View Timetables</a>
                 </div>
             </div>
+            
             <h2>Statistics Overview</h2>
             <canvas id="statisticsChart"></canvas>
             <h2>Grades Distribution</h2>
@@ -262,7 +261,6 @@
         async function loadStatistics() {
             document.getElementById('loading').style.display = 'block'; 
             const token = localStorage.getItem('token'); 
-            console.log('Loaded Token:', token); // Debug output for the token
 
             if (!token) {
                 alert('Session expired. Please log in again.');
@@ -295,8 +293,6 @@
                 document.getElementById('timetable-count').innerText = data.data.timetableCount || 0; 
 
                 loadStatisticsChart(data.data); 
-
-                // Load other charts as needed
                 await loadGradesDistribution();
                 await loadAttendanceTrends();
                 await loadAssignmentSubmissionRates();
@@ -363,7 +359,6 @@
             }
 
             const data = await response.json();
-
             const labels = data.data.map(item => `Month ${item.month} ${item.year}`);
             const attendanceData = data.data.map(item => item.average_attendance);
 
@@ -426,7 +421,6 @@
             });
         }
 
-        // Function to load notifications
         async function loadNotifications() {
             const token = localStorage.getItem('token');
 
@@ -675,5 +669,25 @@
             }
         }
     </script>
-</body>
+</body>SELECT TABLE_NAME, COLUMN_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_SCHEMA = 'education' 
+AND TABLE_NAME IN (
+    'admin_notifications',
+    'admins',
+    'assignments',
+    'attendance',
+    'classes',
+    'classmaterials',
+    'grades',
+    'notifications',
+    'questions',
+    'students',
+    'submissions',
+    'teacher_notifications',
+    'teachers',
+    'timetable'
+)
+ORDER BY TABLE_NAME, COLUMN_NAME;
+
 </html>

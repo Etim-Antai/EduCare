@@ -1,15 +1,22 @@
 /* The above code is a Node.js application that handles authentication and CRUD operations for admins,
 teachers, and students in a school management system. Here is a summary of the main functionalities: */
-const db = require('../config/db');
+const db = require('../config/db'); // Database connection setup
 const jwt = require('jsonwebtoken'); // Import JWT for handling tokens
 const bcrypt = require('bcrypt'); // Ensure bcrypt is installed using npm
 const Joi = require('joi'); // Import Joi for validation
+const AdminNotification = require('../models/adminNotificationModel'); // Import admin notification model
 const {
-    createAdminRetrievalNotification,
-    createTeacherLoginNotification,
-    createStudentLoginNotification,
     createStudentRegistrationNotification,
+    createAdminRetrievalNotification,
+    createTeacherLoginNotification, // Ensure this is imported
 } = require('../utils/notificationUtils'); // Import notification utility functions
+const TeacherNotificationUtils = require('../utils/teacherNotificationUtils'); // Import teacher notification utility functions
+
+// Function to get the teacher ID by student ID
+const getTeacherIdByStudentId = async (studentId) => {
+    const [results] = await db.query('SELECT class_id FROM students WHERE student_id = ?', [studentId]);
+    return results[0] ? results[0].teacher_id : null;
+};
 
 // Admin Login
 const loginAdmin = async (req, res) => {
@@ -47,9 +54,13 @@ const loginAdmin = async (req, res) => {
         );
 
         // Automatically log the admin login action
-        await createAdminRetrievalNotification(admin.admin_id); // Call to log the admin login notification
+        await AdminNotification.create({
+            message: `Admin with ID ${admin.admin_id} logged in.`,
+            type: 'admin_login',
+            admin_id: admin.admin_id,
+        });
 
-        // Respond with token and admin info  
+        // Respond with token and admin info
         res.status(200).json({
             message: 'Login successful',
             token,
@@ -59,7 +70,7 @@ const loginAdmin = async (req, res) => {
                 role: admin.role,
                 first_name: admin.first_name,
                 last_name: admin.last_name,
-                username: admin.username
+                username: admin.username,
             }
         });
     } catch (error) {
@@ -166,7 +177,11 @@ const getAdminById = async (req, res) => {
         }
 
         // Log the retrieval of this admin
-        await createAdminRetrievalNotification(admin_id);
+        await AdminNotification.create({
+            message: `Admin with ID ${admin_id} was retrieved.`,
+            type: 'admin_retrieval',
+            admin_id
+        });
 
         res.status(200).json({
             message: 'Admin retrieved successfully',
@@ -297,7 +312,6 @@ const deleteTeacherById = async (req, res) => {
     }
 };
 
-
 // Register Student
 const registerStudent = async (req, res) => {
     const { first_name, last_name, gender, date_of_birth, address, contact_info, email, password, enrollment_date, class_id } = req.body;
@@ -365,9 +379,6 @@ const getAllStudents= async (req, res) => {
     }
 };
 
-
-
-
 // Get Student by ID
 const getStudentById = async (req, res) => {
     const { student_id } = req.params;
@@ -409,7 +420,7 @@ const updateStudentById = async (req, res) => {
         return res.status(400).json({ message: 'Invalid email format' });
     }
 
-    try {  
+    try {
         // Check if student exists
         const [results] = await db.query('SELECT * FROM students WHERE student_id = ?', [student_id]);
         const student = results[0];
@@ -442,7 +453,7 @@ const updateStudentById = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error updating student:', error.message || error);
+        console.error('Error updating student:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -456,7 +467,7 @@ const deleteStudentById = async (req, res) => {
         return res.status(400).json({ message: 'Invalid student ID' });
     }
 
-    try {  
+    try {
         // Check if student exists
         const [results] = await db.query('SELECT * FROM students WHERE student_id = ?', [student_id]);
         const student = results[0];
@@ -467,11 +478,9 @@ const deleteStudentById = async (req, res) => {
         // Delete the student from the database
         await db.query('DELETE FROM students WHERE student_id = ?', [student_id]);
         
-        res.status(200).json({
-            message: 'Student deleted successfully'
-        });
+        res.status(200).json({ message: 'Student deleted successfully' });
     } catch (error) {    
-        console.error('Error deleting student:', error.message || error);
+        console.error('Error deleting student:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -485,6 +494,7 @@ const loginStudent = async (req, res) => {
     }
 
     try {
+        // Fetch student by email
         const [results] = await db.query('SELECT * FROM students WHERE email = ?', [email]);
         const student = results[0];
 
@@ -492,20 +502,41 @@ const loginStudent = async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
+        // Validate password
         const isMatch = await bcrypt.compare(password, student.password);
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
+        // Generate JWT
         const token = jwt.sign(
             { id: student.student_id, email: student.email, role: 'Student' },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
-        // Log the student login action
-        await createStudentLoginNotification(student.student_id); // Log this login action
+        // Create student login notification for admin
+        const adminMessage = `Student with ID ${student.student_id} has logged in.`;
+        await AdminNotification.create({
+            message: adminMessage,
+            type: 'student_login',
+            student_id: student.student_id,
+        });
 
+        // Notify the teacher associated with the student
+        const teacherId = await getTeacherIdByStudentId(student.student_id);
+        const studentName = `${student.first_name} ${student.last_name}`;
+
+        if (teacherId) {
+            const message = `${studentName} has logged in to the system.`;
+            await TeacherNotificationUtils.createNotification({
+                teacher_id: teacherId,
+                message,
+                event_type: 'Student Login'
+            });
+        }
+
+        // Respond with login success
         res.status(200).json({
             message: 'Login successful',
             token,
@@ -514,10 +545,9 @@ const loginStudent = async (req, res) => {
                 first_name: student.first_name,
                 last_name: student.last_name,
                 email: student.email,
-                subject: student.subject,
-                phone: student.phone,
-                hire_date: student.hire_date,
-                role: student.role,
+                gender: student.gender,
+                address: student.address,
+                role: 'Student',
             }
         });
     } catch (error) {
@@ -615,6 +645,23 @@ const loginTeacher = async (req, res) => {
     }
 };
 
+
+// get classes
+const getAllClasses = async (req, res) => {
+    try {
+        const [results] = await db.query('SELECT * FROM classes');
+        const classes = results;
+
+        res.status(200).json({ message: 'Classes retrieved successfully', classes });
+    } catch (error) {
+        console.error('Error fetching classes:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
+
+
 // Export all the required functions
 module.exports = {
     loginAdmin,
@@ -634,4 +681,6 @@ module.exports = {
     loginTeacher,
     loginStudent,
     getAdminById,
+    getTeacherIdByStudentId,// Exporting this function
+    getAllClasses
 };

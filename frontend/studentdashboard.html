@@ -5,182 +5,430 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* CSS styles for the dashboard layout */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f9f9f9;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
+
         header {
-            background-color: #8a7b6b; /* Header color */
+            background-color: #34495e;
             color: white;
-            padding: 15px;
             text-align: center;
+            padding: 20px 0;
         }
-        h1 {
-            margin: 0;
-        }
+
         nav {
-            background-color: #333;
-            padding: 10px 0;
+            margin: 10px 0;
+            background-color: #2c3e50;
             text-align: center;
         }
+
         nav a {
             color: white;
             margin: 0 15px;
             text-decoration: none;
+            padding: 10px 15px;
+            transition: background-color 0.3s;
         }
+
         nav a:hover {
-            text-decoration: underline;
-        }
-        .container {
-            max-width: 800px;
-            margin: 20px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .stat-item {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            border: 1px solid #ccc;
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 5px;
-            background-color: #e9ecef;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            margin: 20px;
+            flex-wrap: nowrap; /* Prevent wrapping */
+        }
+
+        .sidebar {
+            width: 120px;
+            background-color: #7f8c8d;
+            padding: 10px;
+            border-radius: 5px;
             margin-right: 10px;
         }
-        .stat-item:last-child {
-            margin-right: 0; // No margin for the last item
+
+        .sidebar h3 {
+            color: white;
+            font-size: 16px;
+            text-align: center;
         }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .main-content {
+            flex: 1; 
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            margin: 0 10px;
+        }
+
+        .stats-summary {
+            display: flex; /* Flexbox for horizontal layout */
+            justify-content: space-around; /* Even spacing along the container */
+            padding: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1; /* Allow flex items to grow equally */
+            padding: 10px;
+        }
+
         footer {
             text-align: center;
             padding: 10px;
-            background-color: #8a7b6b;
+            background-color: #34495e;
             color: white;
+        }
+
+        #loading {
+            display: none; 
+            color: #007bff;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .notification-sidebar {
+            width: 200px; /* Adjusted width */
+            background-color: #95a5a6;
+            padding: 10px;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+
+        .notification-sidebar h3 {
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .notification-sidebar ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            color: white;
+        }
+
+        .notification-sidebar a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .notification-sidebar a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px; /* Reduced width for mobile */
+            }
+
+            .notification-sidebar {
+                width: 150px; /* Reduced width for mobile */
+            }
         }
     </style>
 </head>
 <body>
+    <header>
+        <h1>Student Dashboard</h1>
+        <h2 id="studentName"></h2>
+    </header>
 
-<header>
-    <h1>Student Dashboard</h1>
-    <h2 id="studentName"></h2>
-</header>
+    <nav>
+        <a href="studentProfile.html">Profile</a>
+        <a href="studentclasses.html">My Classes</a>
+        <a href="studentAssignments.html">My Assignments</a>
+        <a href="submitAssignment.html">Submit Assignment</a>
+        <a href="attendance.html">View Attendance</a>
+        <a href="studentNotifications.html">Notifications</a>
+        <a href="logout.html">Logout</a>
+    </nav>
 
-<nav>
-    <a href="viewAssignments.html">Assignments</a>
-    <a href="viewClassMaterials.html">Class Materials</a>
-    <a href="viewGrades.html">Grades</a>
-    <a href="notifications.html">Notifications</a>
-    <a href="studentProfile.html">Profile</a>
-</nav>
-
-<div class="container">
-    <div class="stats">
-        <div class="stat-item">
-            <h3>My Classes</h3>
-            <p id="class-count">0</p>
+    <div class="container">
+        <div class="sidebar">
+            <h3>Quick Links</h3>
+            <a href="viewGrades.html"><i class="fas fa-file-alt"></i> View Grades</a>
+            <a href="messageTeachers.html"><i class="fas fa-comments"></i> Message Teachers</a>
+            <a href="studenttimetable.html"><i class="fas fa-calendar-alt"></i> View Timetable</a>
+            <a href="viewmaterials.html"><i class="fas fa-folder-open"></i> View Materials</a>
         </div>
-        <div class="stat-item">
-            <h3>Upcoming Assignments</h3>
-            <p id="assignment-count">0</p>
+
+        <div class="main-content">
+            <div id="loading">Loading statistics...</div>
+
+            <!-- Horizontal Statistics Summary Section -->
+            <div class="stats-summary">
+                <div class="stat-item">
+                    <h3>Total Classes</h3>
+                    <p id="class-count">0</p>
+                </div>
+                <div class="stat-item">
+                    <h3>Attendance</h3>
+                    <p id="attendance-count">0 attended, 0 missed</p>
+                </div>
+                <div class="stat-item">
+                    <h3>Total Assignments</h3>
+                    <p id="assignment-count">0</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2>Attendance Overview</h2>
+                <canvas id="attendanceChart" style="height: 300px;"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h2>Grades Distribution</h2>
+                <canvas id="gradesChart" style="height: 300px;"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h2>Assignment Submission Rates</h2>
+                <canvas id="submissionRatesChart" style="height: 300px;"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h2>Notifications Summary</h2>
+                <canvas id="notificationsChart" style="height: 300px;"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h2>Class Participation Over Time</h2>
+                <canvas id="participationChart" style="height: 300px;"></canvas>
+            </div>
         </div>
-        <div class="stat-item">
+
+        <div class="notification-sidebar">
             <h3>Notifications</h3>
-            <p id="notification-count">0</p>
+            <ul id="notificationList">
+                <li><a href="#">Loading notifications...</a></li>
+            </ul>
         </div>
     </div>
 
-    <h2>Latest Notifications</h2>
-    <div id="notificationList"></div> <!-- List of notifications will be dynamically populated -->
-</div>
+    <footer>
+        <p>&copy; 2023 All Rights Reserved.</p>
+        <p>Contact Us: support@student-dashboard.com | Phone: (123) 456-7890</p>
+    </footer>
 
-<footer>
-    <p>&copy; 2023 All Rights Reserved.</p>
-</footer>
+    <script>
+        // Global variable to store the participation chart
+        window.participationChart = null;
 
-<script>
-    window.onload = function() {
-        const firstName = localStorage.getItem('studentFirstName');
-        const lastName = localStorage.getItem('studentLastName');
-        document.getElementById('studentName').innerText = `Welcome, ${firstName} ${lastName}!`;
-        loadStudentStatistics();
-        loadNotifications();
-    };
+        window.onload = function() {
+            const firstName = localStorage.getItem('studentFirstName');
+            const lastName = localStorage.getItem('studentLastName');
+            document.getElementById('studentName').innerText = `Welcome, ${firstName} ${lastName}!`;
+            loadStatistics();
+            loadNotifications();
+            loadClassParticipation();
+        };
 
-    async function loadStudentStatistics() {
-        try {
+        async function loadStatistics() {
+            document.getElementById('loading').style.display = 'block'; 
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:9000/api/student/statistics', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to load statistics: ' + response.statusText);
-            }
-
-            const data = await response.json();
-            document.getElementById('class-count').innerText = data.classes || 0;
-            document.getElementById('assignment-count').innerText = data.assignments || 0;
-            document.getElementById('notification-count').innerText = data.notifications || 0;
-        } catch (error) {
-            console.error('Error loading student statistics:', error);
-            alert("Failed to load statistics. Please try again later.");
-        }
-    }
-
-    async function loadNotifications() {
-        const token = localStorage.getItem('token');
-        
-        try {
-            const response = await fetch('http://localhost:9000/api/student-notifications', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch notifications: ' + response.statusText);
-            }
-
-            const data = await response.json();
-            const notifications = data.notifications || [];
-            const notificationList = document.getElementById('notificationList');
-            notificationList.innerHTML = '';
-
-            if (notifications.length === 0) {
-                notificationList.innerHTML = '<p>No new notifications.</p>';
-            } else {
-                notifications.forEach(notification => {
-                    const notificationItem = document.createElement('div');
-                    notificationItem.className = 'notification-item';
-                    notificationItem.innerHTML = `
-                        <strong>${notification.message}</strong><br>
-                        <small>${new Date(notification.created_at).toLocaleString()}</small>
-                    `;
-                    notificationList.appendChild(notificationItem);
+            try {
+                const response = await fetch('http://localhost:9000/api/students/statistics', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
+
+                if (!response.ok) {
+                    throw new Error('Error fetching statistics');
+                }
+
+                const statisticsData = await response.json();
+                const statistics = statisticsData.data[0]; // Access the first data object
+
+                // Update counts in the UI
+                document.getElementById('class-count').innerText = statistics.total_classes || 0;
+                document.getElementById('attendance-count').innerText = `${statistics.attended} attended, ${statistics.missed} missed`;
+                document.getElementById('assignment-count').innerText = statistics.total_assignments || 0;
+
+                // Load charts with fetched statistics
+                loadAttendanceChart(statistics.attended, statistics.missed);
+
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                alert("Failed to load statistics. Please try again later.");
+            } finally {
+                document.getElementById('loading').style.display = 'none';
             }
-        } catch (error) {
-            console.error('Error loading notifications:', error);
-            alert("Failed to load notifications. Please try again later.");
         }
-    }
 
-</script>
+        function loadAttendanceChart(attended, missed) {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Attended', 'Missed'],
+                    datasets: [{
+                        data: [attended, missed],
+                        backgroundColor: ['#36A2EB', '#FF6384'],
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
 
+        async function loadClassParticipation() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch('http://localhost:9000/api/students/class-participation', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch class participation data');
+                }
+
+                const participationData = await response.json();
+                const participation = participationData.data;
+
+                const labels = participation.map(record => new Date(record.attendance_date).toLocaleDateString());
+                const presentCounts = participation.map(record => record.present_count);
+
+                loadParticipationChart(labels, presentCounts);
+            } catch (error) {
+                console.error('Error loading class participation:', error);
+                alert("Failed to load class participation data. Please try again later.");
+            }
+        }
+
+        function loadParticipationChart(labels, presentCounts) {
+            const participationCtx = document.getElementById('participationChart').getContext('2d');
+
+            // Check if the chart already exists, if so, destroy it
+            if (window.participationChart) {
+                window.participationChart.destroy();
+            }
+
+            // Create the new participation chart
+            window.participationChart = new Chart(participationCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Present Count',
+                        data: presentCounts,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadNotifications() {
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch('http://localhost:9000/api/students/notifications', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch notifications');
+                }
+
+                const data = await response.json();
+                const notifications = data.data || [];
+                const notificationList = document.getElementById('notificationList');
+                notificationList.innerHTML = '';
+
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = '<li><a href="#">No new notifications</a></li>';
+                } else {
+                    notifications.forEach(notification => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <a href="#">${notification.message}</a>
+                            <small>Type: ${notification.event_type}</small>
+                            <small>Created At: ${new Date(notification.created_at).toLocaleString()}</small>`;
+                        listItem.onclick = async () => {
+                            await markAsRead(notification.notification_id);
+                        };
+                        notificationList.appendChild(listItem);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                alert("Failed to load notifications. Please try again later.");
+            }
+        }
+
+        async function markAsRead(notificationId) {
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`http://localhost:9000/api/notifications/${notificationId}/read`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to mark notification as read');
+                }
+
+                loadNotifications(); // Refresh the notifications list after marking as read
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+                alert("Failed to mark notification as read. Please try again later.");
+            }
+        }
+    </script>
 </body>
 </html>

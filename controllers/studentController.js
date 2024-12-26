@@ -49,6 +49,42 @@ exports.updateStudent = async (req, res) => {
     }
 };
 
+
+
+
+
+
+// view student profile
+exports.viewProfile = async (req, res) => {
+    const studentId = req.params.id;
+
+    try {
+        const student = await studentModel.getStudentById(studentId);
+        if (!student) return res.status(404).json({ message: 'Student not found' });
+        res.status(200).json({ data: student });
+    } catch (error) {
+        console.error('Error fetching student profile:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Delete a Student (Soft Delete)
 exports.deleteStudent = async (req, res) => {
     const studentId = req.params.id;
@@ -83,9 +119,12 @@ exports.getClassMaterials = async (req, res) => {
     const studentId = req.user.id; // Use the student ID from the JWT token
 
     try {
-        // Fetch class materials based on student ID
         const [materials] = await db.query(
-            'SELECT cm.* FROM classmaterials cm JOIN classes c ON cm.class_id = c.class_id WHERE c.class_id = (SELECT class_id FROM students WHERE student_id = ?) AND cm.deleted_at IS NULL',
+            `SELECT cm.* 
+             FROM classmaterials cm 
+             JOIN classes c ON cm.class_id = c.class_id 
+             WHERE c.class_id = (SELECT class_id FROM students WHERE student_id = ?) 
+             AND cm.deleted_at IS NULL`,
             [studentId]
         );
 
@@ -96,7 +135,7 @@ exports.getClassMaterials = async (req, res) => {
         res.status(200).json({ data: materials });
     } catch (error) {
         console.error('Error fetching class materials:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
@@ -112,7 +151,7 @@ exports.getStudentsByClassId = async (req, res) => {
         res.status(200).json({ data: students });
     } catch (error) {
         console.error('Error fetching students by class ID:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
@@ -121,7 +160,6 @@ exports.getNotifications = async (req, res) => {
     const studentId = req.user.id; // Assuming the student ID is in the JWT token
 
     try {
-        // Query the database to get notifications for the student
         const [notifications] = await db.query(
             'SELECT * FROM notifications WHERE student_id = ? ORDER BY notification_date DESC', 
             [studentId]
@@ -134,6 +172,192 @@ exports.getNotifications = async (req, res) => {
         res.status(200).json({ data: notifications });
     } catch (error) {
         console.error('Error fetching notifications:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get Attendance Overview for the logged-in student
+exports.getAttendanceOverview = async (req, res) => {
+    const studentId = req.user.id; // Use the student ID from the JWT token
+
+    try {
+        const [attendanceOverview] = await db.query(
+            `SELECT 
+                COUNT(CASE WHEN status = 'Present' THEN 1 END) AS attended,
+                COUNT(CASE WHEN status = 'Absent' THEN 1 END) AS missed
+            FROM attendance
+            WHERE student_id = ?`,
+            [studentId]
+        );
+
+        res.status(200).json({ data: attendanceOverview });
+    } catch (error) {
+        console.error('Error fetching attendance overview:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get Assignment Grades for the logged-in student
+exports.getAssignmentGrades = async (req, res) => {
+    const studentId = req.user.id; // Use the student ID from the JWT token
+
+    try {
+        const [grades] = await db.query(
+            `SELECT 
+                a.title AS assignment_title, 
+                g.score AS score
+            FROM grades g
+            JOIN assignments a ON g.assignment_id = a.assignment_id -- Ensure the 'assignment_id' exists in 'grades'
+            WHERE g.student_id = ?`,
+            [studentId]
+        );
+
+        if (grades.length === 0) {
+            return res.status(404).json({ message: 'No grades found for this student' });
+        }
+
+        res.status(200).json({ data: grades });
+    } catch (error) {
+        console.error('Error fetching assignment grades:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get total classes for the logged-in student
+exports.getTotalClasses = async (req, res) => {
+    const studentId = req.user.id; // Use the student ID from the JWT token
+
+    try {
+        const [totalClasses] = await db.query(
+            `SELECT 
+                COUNT(DISTINCT classes.class_id) AS total_classes
+            FROM classes 
+            JOIN students ON students.class_id = classes.class_id 
+            WHERE students.student_id = ?`,
+            [studentId]
+        );
+
+        res.status(200).json({ data: totalClasses });
+    } catch (error) {
+        console.error('Error fetching total classes:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get notifications count for the logged-in student
+exports.getNotificationsCount = async (req, res) => {
+    const studentId = req.user.id; // Use the student ID from the JWT token
+
+    try {
+        const [notificationsCount] = await db.query(
+            `SELECT 
+                COUNT(CASE WHEN is_read = 0 THEN 1 END) AS unread_notifications,
+                COUNT(CASE WHEN is_read = 1 THEN 1 END) AS read_notifications
+            FROM notifications
+            WHERE student_id = ?`,
+            [studentId]
+        );
+
+        res.status(200).json({ data: notificationsCount });
+    } catch (error) {
+        console.error('Error fetching notifications count:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get class participation over time for the logged-in student
+exports.getClassParticipation = async (req, res) => {
+    const studentId = req.user.id; // Use the student ID from the JWT token
+
+    try {
+        const [participation] = await db.query(
+            `SELECT 
+                DATE(date) AS attendance_date, 
+                COUNT(CASE WHEN status = 'Present' THEN 1 END) AS present_count
+            FROM attendance
+            WHERE student_id = ?
+            GROUP BY DATE(date)`,
+            [studentId]
+        );
+
+        res.status(200).json({ data: participation });
+    } catch (error) {
+        console.error('Error fetching class participation:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Mark notification as read
+exports.markNotificationAsRead = async (req, res) => {
+    const { notificationId } = req.params;
+
+    try {
+        await db.query(`UPDATE notifications SET is_read = 1 WHERE notification_id = ?`, [notificationId]);
+        res.status(200).json({ message: 'Notification marked as read' });
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get Statistics for Dashboard
+exports.getStatistics = async (req, res) => {
+    const studentId = req.user.id; // Get student ID from JWT token
+
+    try {
+        const [statistics] = await db.query(
+            `SELECT
+                COUNT(DISTINCT classes.class_id) AS total_classes,
+                COUNT(CASE WHEN attendance.status = 'Present' THEN 1 END) AS attended,
+                COUNT(CASE WHEN attendance.status = 'Absent' THEN 1 END) AS missed,
+                (SELECT COUNT(DISTINCT assignment_id) 
+                 FROM assignments 
+                 WHERE class_id IN (
+                     SELECT class_id 
+                     FROM classes 
+                     WHERE teacher_id = ?)
+                ) AS total_assignments,
+                AVG(grades.score) AS average_score
+            FROM attendance
+            LEFT JOIN classes ON attendance.class_id = classes.class_id
+            LEFT JOIN grades ON grades.student_id = ?
+            WHERE attendance.student_id = ?`,
+            [studentId, studentId, studentId]
+        );
+
+        res.status(200).json({ data: statistics });
+    } catch (error) {
+        console.error('Error fetching statistics:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+
+
+
+
+
+
+
+    // Get Class Participation Data
+exports.getClassParticipation = async (req, res) => {
+    const studentId = req.user.id; // Get student ID from JWT token
+
+    try {
+        const participationData = await db.query(
+            `SELECT 
+                DATE(date) AS attendance_date, 
+                COUNT(CASE WHEN status = 'Present' THEN 1 END) AS present_count 
+            FROM attendance 
+            WHERE student_id = ? 
+            GROUP BY DATE(date)`,
+            [studentId]
+        );
+
+        // Return the fetched participation data
+        res.status(200).json({ data: participationData });
+    } catch (error) {
+        console.error('Error fetching class participation:', error);
+        res.status(500).json({ message: 'Failed to fetch class participation' });
+    }
+    };

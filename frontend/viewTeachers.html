@@ -4,157 +4,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Teachers</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        /* Basic Reset */
+        body, h1, h2, h3, p, table {
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            border: 0;
+            box-sizing: border-box;
         }
 
-        .header {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
+        /* Body Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        /* Container Styles */
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Headings */
+        h1 {
+            margin-bottom: 20px;
             text-align: center;
         }
 
-        .container {
-            padding: 20px;
+        h2 {
+            margin-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
         }
 
+        /* Table Styles */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0;
+            margin-top: 20px;
         }
 
         table th, table td {
-            border: 1px solid #ccc;
             padding: 10px;
+            border: 1px solid #ddd;
             text-align: left;
         }
 
         table th {
-            background-color: #f4f4f4;
-        }
-
-        .back-to-dashboard {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 15px;
-            background-color: #007bff; /* Same color as header */
+            background-color: #007bff;
             color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            float: right;
-        }
-
-        .back-to-dashboard:hover {
-            background-color: #0056b3; /* Darker shade for hover effect */
-        }
-
-        #loading {
-            display: none; /* Hidden by default */
-            margin-top: 10px;
-            font-weight: bold;
-            color: #007bff;
-        }
-
-        #message {
-            color: red; /* For error messages */
-            font-weight: bold;
-            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>View Teachers</h1>
-    </div>
-
     <div class="container">
-        <div id="loading">Loading teachers...</div> <!-- Loading indicator -->
-        <div id="message"></div> <!-- Error message display -->
-        <table id="teacherList">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Subject</th>
-                    <th>Year of Appointment</th> <!-- Year of appointment -->
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Teacher list will be dynamically populated here -->
-            </tbody>
-        </table>
-
-        <a href="admindashboard.html" class="back-to-dashboard">Back to Dashboard</a> <!-- Link back to admin dashboard -->
+        <h1>View Teachers</h1>
+        <section id="teachers-list">
+            <h2>Teachers List</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Teacher ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Subject</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody id="teachersTable"></tbody>
+            </table>
+        </section>
     </div>
 
     <script>
-        // Check if the token exists, if not redirect to the login page
-        function checkLogin() {
-            const token = sessionStorage.getItem('token'); // Use sessionStorage for consistency
-            if (!token) {
-                window.location.href = 'adminLogin.html'; // Redirect if not logged in
-            }
-        }
+        const token = localStorage.getItem('token'); // Retrieve saved token
 
-        // Fetch teacher list from the API
         async function fetchTeachers() {
-            const token = sessionStorage.getItem('token'); // Retrieve JWT token from session storage
-
-            document.getElementById('loading').style.display = 'block';  // Show loading message
-            document.getElementById('message').textContent = ''; // Clear previous messages
-
             try {
-                const response = await fetch('http://localhost:9000/api/admin/teachers', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // Include the token in the Authorization header
-                    }
+                const response = await axios.get('http://localhost:9000/api/auth/admin/teachers', {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
+                const teachers = response.data.teachers; // Ensure API returns teacher data
+                const teachersTable = document.getElementById('teachersTable');
+                teachersTable.innerHTML = ''; // Clear table
 
-                if (!response.ok) {
-                    throw new Error('Unauthorized access. Please log in again.');
-                }
-
-                const data = await response.json();
-                const teacherTable = document.getElementById('teacherList').getElementsByTagName('tbody')[0];
-                teacherTable.innerHTML = ''; // Clear existing data
-
-                // Populate the table with teacher data
-                if (data.data && data.data.length > 0) {
-                    data.data.forEach(teacher => {
-                        const row = teacherTable.insertRow();
-                        row.insertCell(0).innerText = teacher.teacher_id;
-                        row.insertCell(1).innerText = `${teacher.first_name} ${teacher.last_name}`;
-                        row.insertCell(2).innerText = teacher.email;
-                        row.insertCell(3).innerText = teacher.subject;
-
-                        // Extract year from the hire_date and insert it into the new column
-                        const hireDate = new Date(teacher.hire_date);
-                        row.insertCell(4).innerText = hireDate.getFullYear(); // Only the year of appointment
-                    });
-                } else {
-                    document.getElementById('message').textContent = "No teachers found.";
-                }
+                teachers.forEach((teacher) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${teacher.teacher_id}</td>
+                        <td>${teacher.first_name}</td>
+                        <td>${teacher.last_name}</td>
+                        <td>${teacher.subject}</td>
+                        <td>${teacher.email}</td>
+                    `;
+                    teachersTable.appendChild(row);
+                });
             } catch (error) {
-                console.error('Error fetching teachers:', error);
-                document.getElementById('message').textContent = "An error occurred while fetching teachers: " + error.message;
-            } finally {
-                document.getElementById('loading').style.display = 'none'; // Hide loading message
+                console.error('Error fetching teachers:', error.response?.data?.message || error.message);
+                alert('Failed to load teacher data');
             }
         }
 
-        // Call functions on page load
+        // Initialize
         window.onload = function() {
-            checkLogin(); // Check if logged in
-            fetchTeachers(); // Load teachers when the page is ready
+            fetchTeachers(); // Load teachers list
         };
     </script>
 </body>

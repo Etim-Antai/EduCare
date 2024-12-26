@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Assignments</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+        header {
+            background-color: #5a67d8;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .back-link {
+            margin-bottom: 20px;
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #48bb78;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .back-link:hover {
+            background-color: #38a169;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #ebf8ff;
+        }
+        td {
+            background-color: #f7fafc;
+        }
+        tr:hover {
+            background-color: #f0f5ff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Student Assignments</h1>
+    </header>
+    <div class="container">
+        <a href="studentdashboard.html" class="back-link">Return to Dashboard</a>
+        <table id="assignmentsTable">
+            <thead>
+                <tr>
+                    <th>Assignment ID</th>
+                    <th>Class ID</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Due Date</th>
+                    <th>Total Points</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Assignment rows will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Function to fetch assignment data and display it
+        async function fetchAssignments() {
+            try {
+                // Retrieve the token from local storage
+                const token = localStorage.getItem('token'); // Change this according to your storage method
+
+                const response = await fetch('http://localhost:9000/api/assignments', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`, // Use token for authentication
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                displayAssignments(data); // Assuming the assignments are in the root of the returned object
+            } catch (error) {
+                console.error('Error fetching assignments:', error);
+            }
+        }
+
+        function displayAssignments(assignments) {
+            const tableBody = document.getElementById('assignmentsTable').querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear any existing rows
+
+            assignments.forEach(assignment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${assignment.assignment_id}</td>
+                    <td>${assignment.class_id}</td>
+                    <td>${assignment.title}</td>
+                    <td>${assignment.description}</td>
+                    <td>${new Date(assignment.due_date).toLocaleString()}</td>
+                    <td>${assignment.total_points}</td>
+                    <td>${new Date(assignment.created_at).toLocaleString()}</td>
+                    <td>${new Date(assignment.updated_at).toLocaleString()}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Fetch assignments when the page is loaded
+        window.onload = fetchAssignments;
+    </script>
+</body>
+</html>

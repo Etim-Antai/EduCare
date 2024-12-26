@@ -5,11 +5,11 @@ const path = require('path'); // Module for handling file and directory paths
 const { exec } = require('child_process'); // Module to execute shell commands
 
 class Submission {
-    static async createSubmission({ assignment_id, student_id, content }) {
+    static async createSubmission({ assignment_id, student_id, content, teacher_id }) {
         try {
             const [result] = await db.query(
-                'INSERT INTO submissions (assignment_id, student_id, content, graded, score) VALUES (?, ?, ?, FALSE, NULL)',
-                [assignment_id, student_id, content]
+                'INSERT INTO submissions (assignment_id, student_id, content, teacher_id, graded, score) VALUES (?, ?, ?, ?, FALSE, NULL)',
+                [assignment_id, student_id, content, teacher_id] // Include teacher_id in the query
             );
             return result.insertId; // Return new submission ID
         } catch (error) {
@@ -91,6 +91,7 @@ class Submission {
         });
     }
 
+    // Function to evaluate the output against the test cases
     static evaluateOutput(output, testCases) {
         let totalScore = 0;
 
@@ -105,14 +106,3 @@ class Submission {
 }
 
 module.exports = Submission; // Export the Submission class for use in other files
-
-
-/*
-{
-    "assignment_id": 1,
-    "content": "This is my answer to the assignment regarding the capital of France.",
-    "studentAnswers": {
-        "3": "Pars" // Assuming the question ID for this question is 1
-    }
-}
-*/

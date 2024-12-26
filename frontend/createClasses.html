@@ -27,7 +27,7 @@
             background-color: white;
             padding: 20px;
             border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         .form-group {
@@ -133,7 +133,7 @@
     <script>
         // Check if the token exists; if not redirect to the login page
         function checkLogin() {
-            const token = sessionStorage.getItem('token');
+            const token = localStorage.getItem('token'); // Ensure you're using the correct storage
             if (!token) {
                 window.location.href = 'adminLogin.html'; // Redirect if not logged in
             }
@@ -141,8 +141,8 @@
 
         // Fetch teacher list to populate the teacher dropdown
         async function fetchTeachers() {
-            const token = sessionStorage.getItem('token'); // Retrieve JWT token from session storage
-
+            const token = localStorage.getItem('token'); // Retrieve JWT token from local storage
+            
             try {
                 const response = await fetch('http://localhost:9000/api/admin/teachers', {
                     method: 'GET',
@@ -174,8 +174,8 @@
 
         // Fetch existing classes to populate the dropdown
         async function fetchClasses() {
-            const token = sessionStorage.getItem('token'); // Retrieve JWT token from session storage
-
+            const token = localStorage.getItem('token'); // Retrieve JWT token from local storage
+            
             try {
                 const response = await fetch('http://localhost:9000/api/admin/classes', {
                     method: 'GET',
@@ -215,11 +215,17 @@
             const endDate = document.getElementById('endDate').value;
             const selectedClassId = document.getElementById('classSelect').value; // Get the selected class ID
 
-            const token = sessionStorage.getItem('token'); // Retrieve JWT token from local storage
+            const token = localStorage.getItem('token'); // Retrieve JWT token from local storage
             const messageDiv = document.getElementById('message');
             const successMessageDiv = document.getElementById('successMessage');
             messageDiv.textContent = ''; // Clear previous messages
             successMessageDiv.textContent = ''; // Clear previous success messages
+
+            // Validate date input
+            if (new Date(startDate) > new Date(endDate)) {
+                messageDiv.textContent = "Error: End date must be later than start date.";
+                return;
+            }
 
             try {
                 const response = await fetch('http://localhost:9000/api/admin/classes', {

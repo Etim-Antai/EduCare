@@ -77,7 +77,7 @@
     <script>
         $(document).ready(function() {
             $('#loginForm').on('submit', function(event) {
-                event.preventDefault(); // Prevent default form submission
+                event.preventDefault();  // Prevent default form submission
                 
                 const email = $('#email').val();
                 const password = $('#password').val();
@@ -90,10 +90,12 @@
                     success: function(response) {
                         // Handle successful login
                         $('#message').html(`<p>${response.message}</p>`);
-                        // You can redirect the user or store the token here
-                        localStorage.setItem('token', response.token); // Example to store the JWT token
-                        // Optionally redirect to another page after successful login
-                         window.location.href = 'adminashboard.html'; // Redirect to the student dashboard
+                        localStorage.setItem('token', response.token); // Store the JWT token
+                        // Store student details for dashboard
+                        localStorage.setItem('studentFirstName', response.user.first_name);
+                        localStorage.setItem('studentLastName', response.user.last_name);
+                        // Redirect to the student dashboard
+                        window.location.href = 'studentdashboard.html'; // Redirect to the student dashboard
                     },
                     error: function(xhr) {
                         // Handle errors
